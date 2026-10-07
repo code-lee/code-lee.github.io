@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+/* 초등 "AI 탐험대" — 둥근 카드·큰 글씨·통통 튀는 등장. 세계관 에셋(섬 지도·탐험대원)은 파일럿 단계에서 */
+body.v2[data-tone="elem"] { --sl-font: clamp(1.25rem, calc(2 * var(--vw)), 2.2rem); --r: 30px; }
+body.v2[data-tone="elem"] .slide .blocks > .shown { animation: bounce .5s both; }
+@keyframes bounce { 0% { transform: translateY(18px) scale(.96); } 60% { transform: translateY(-4px) scale(1.01); } }
+body.v2[data-tone="elem"] .sl-chip { background: var(--acc); color: #3a2a00; }
+body.v2[data-tone="elem"] .cl-phases .ph { border-radius: 99px; }
+body.v2[data-tone="elem"] .sl-title h1 { color: var(--pri); text-shadow: 0 4px 0 #fff, 0 8px 20px #4f7cff33; }
+body.v2[data-tone="elem"] { --letter-font: 'Jua', var(--font); }
+body.v2[data-tone="elem"] .b-letter { color: var(--pri); -webkit-text-stroke: 2px #fff; paint-order: stroke fill; text-shadow: 0 5px 0 #2b4fd1, 0 10px 24px #4f7cff55; letter-spacing: .01em; }
+body.v2[data-tone="elem"] .sl-title h1.b-letter { font-size: 3.4em; }
+body.v2[data-tone="elem"] .b-stamp { font-family: 'Jua', var(--font); }
+/* 포털: 하늘섬 지도 — 섬이 구불구불 길을 따라 떠 있다 */
+.p-e { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 34px 22px; padding: 10px 0 40px; }
+.isle { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; transform: translateY(calc(sin(var(--i) * 1.3) * 22px)); }
+.isle-pic { width: 160px; aspect-ratio: 1; border-radius: 50% 50% 46% 46% / 55% 55% 45% 45%; overflow: hidden; border: 6px solid #fff; box-shadow: 0 18px 0 -6px #8fd18b, 0 26px 30px -10px #2b4fd166; animation: bob 4s ease-in-out calc(var(--i) * -.4s) infinite; }
+.isle-pic img { width: 100%; height: 100%; object-fit: cover; }
+.isle small { margin-top: 18px; font-family: 'Jua', var(--font); color: var(--pri); font-size: 1.1rem; }
+.isle b { font-size: 1.05rem; line-height: 1.35; }
+.isle-done { position: absolute; top: 4px; right: 18%; background: var(--hot); color: #fff; font-style: normal; font-size: .8rem; padding: 2px 10px; border-radius: 99px; transform: rotate(8deg); }
+.isle:hover .isle-pic { animation-play-state: paused; transform: scale(1.06); }

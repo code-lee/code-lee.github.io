@@ -1,0 +1,249 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex"><link rel="icon" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css?v=1791415866">
+<title>AI 윤리 디지털 교과서</title>
+<style>
+/* 표지(랜딩) — 밝은 교육 홈페이지: 흰 메뉴 · 밝은 전용 배경 영상(학교급 영상 재사용 X) · 학교급 카드 · 사용 방법 · 수업 구성 · 차시 목록 */
+:root { --bg: #f7f9fd; --bg2: #eef3fb; --card: #fff; --line: #e1e7f2; --ink: #142039; --muted: #5b6782; --pri: #2f6bff; --pri2: #1f4fd6; --sun: #ffb938; --nav: 70px;
+  --shadow: 0 18px 40px -22px rgba(20, 40, 90, .35); }
+* { box-sizing: border-box; } html { scroll-behavior: smooth; scroll-padding-top: var(--nav); } body { margin: 0; }
+body { word-break: keep-all; overflow-wrap: break-word; background: var(--bg); color: var(--ink); line-height: 1.6;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif; }
+a { color: inherit; text-decoration: none; }
+.wrap { width: min(1240px, 100% - 40px); margin: 0 auto; }
+
+/* 상단 메뉴 */
+.nav { position: fixed; inset: 0 0 auto; height: var(--nav); z-index: 50; background: rgba(255, 255, 255, .78); backdrop-filter: blur(14px); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
+.nav.solid { border-color: var(--line); box-shadow: 0 6px 20px -16px rgba(20, 40, 90, .4); }
+.nav .wrap { height: 100%; display: flex; align-items: center; gap: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; white-space: nowrap; font-size: 1.05rem; }
+.brand i { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, var(--pri), #6aa0ff); display: grid; place-items: center; font-style: normal; color: #fff; font-size: .78rem; font-weight: 900; }
+.menu { display: flex; gap: 26px; margin-left: auto; font-size: .97rem; font-weight: 600; color: #36425e; }
+.menu a { position: relative; padding: 6px 0; white-space: nowrap; } .menu a:hover { color: var(--pri); }
+.menu a::after { content: ''; position: absolute; left: 0; right: 100%; bottom: 0; height: 2px; background: var(--pri); transition: right .3s; } .menu a:hover::after { right: 0; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 50px; padding: 0 26px; border-radius: 99px; font-weight: 700; white-space: nowrap; transition: transform .2s, background .2s, box-shadow .2s; }
+.btn.pri { background: var(--pri); color: #fff; box-shadow: 0 12px 24px -12px rgba(47, 107, 255, .7); } .btn.pri:hover { transform: translateY(-2px); background: var(--pri2); }
+.btn.line { background: #fff; border: 1px solid var(--line); color: var(--ink); } .btn.line:hover { border-color: var(--pri); color: var(--pri); }
+.nav .btn { height: 42px; padding: 0 20px; font-size: .92rem; }
+.burger { display: none; margin-left: auto; background: none; border: 0; color: var(--ink); font-size: 1.6rem; cursor: pointer; }
+
+/* 첫 화면 — 밝은 배경 영상 + 왼쪽 글 */
+.hero { position: relative; isolation: isolate; overflow: hidden; }
+.hero .bg { position: absolute; inset: 0; z-index: -2; overflow: hidden; }
+.hero .bg img { position: absolute; inset: -4%; width: 108%; height: 108%; object-fit: cover; opacity: 0; transition: opacity 2s ease;
+  animation: pan 18s ease-in-out infinite alternate; will-change: transform; backface-visibility: hidden; }
+.hero .bg img:nth-child(2n) { animation-name: pan2; } .hero .bg img:nth-child(3n) { animation-duration: 22s; }
+.hero .bg img.on { opacity: 1; }
+@keyframes pan { from { transform: scale(1.02) translate3d(-2%, 0, 0); } to { transform: scale(1.12) translate3d(2.5%, -1.5%, 0); } }
+@keyframes pan2 { from { transform: scale(1.12) translate3d(2%, 1%, 0); } to { transform: scale(1.03) translate3d(-2.5%, -1%, 0); } }
+.hero .bg::after { content: ''; position: absolute; inset: -50% 0 0; pointer-events: none; opacity: .75;
+  background-image: radial-gradient(2px 2px at 12% 30%, #fff, transparent), radial-gradient(3px 3px at 28% 72%, #fff8, transparent), radial-gradient(2px 2px at 46% 18%, #fff, transparent),
+    radial-gradient(3px 3px at 63% 55%, #fffa, transparent), radial-gradient(2px 2px at 78% 82%, #fff, transparent), radial-gradient(3px 3px at 90% 38%, #fff9, transparent),
+    radial-gradient(2px 2px at 36% 92%, #fff, transparent), radial-gradient(2px 2px at 70% 8%, #fff, transparent);
+  background-size: 640px 640px; animation: float 26s linear infinite; }
+@keyframes float { to { transform: translate3d(0, 33%, 0); } }
+.hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background:
+  linear-gradient(90deg, rgba(247, 249, 253, .96) 0%, rgba(247, 249, 253, .82) 34%, rgba(247, 249, 253, .15) 64%, transparent 80%),
+  linear-gradient(180deg, transparent 45%, rgba(247, 249, 253, .55) 75%, var(--bg) 100%); }
+.hero .wrap { padding: calc(var(--nav) + 26px) 0 clamp(40px, 7svh, 72px); }
+.badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 99px; background: #fff; border: 1px solid var(--line); font-size: .85rem; font-weight: 700; color: var(--pri); box-shadow: var(--shadow); }
+.badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--sun); }
+h1 { font-weight: 900; font-size: clamp(2.1rem, 4.4vw, 3.8rem); line-height: 1.15; margin: 16px 0 12px; letter-spacing: -.035em; animation: up .9s .05s both; }
+h1 em { font-style: normal; color: var(--pri); }
+.lead { color: var(--muted); font-size: clamp(1.02rem, 1.5vw, 1.22rem); margin: 0; max-width: 34em; animation: up .9s .2s both; text-wrap: balance; }
+.hero .row { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; animation: up .9s .3s both; }
+
+/* 학교급 카드 */
+.levels { position: relative; margin-top: clamp(22px, 3.4svh, 34px); z-index: 2; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.door { display: flex; flex-direction: column; background: var(--card); border-radius: 24px; overflow: hidden; border: 1px solid var(--line); box-shadow: var(--shadow); transition: transform .3s, box-shadow .3s; }
+.door:hover { transform: translateY(-6px); box-shadow: 0 30px 50px -24px rgba(20, 40, 90, .45); }
+.door .pic { position: relative; aspect-ratio: 16 / 8.2; overflow: hidden; }
+.door video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s; } .door:hover video { transform: scale(1.06); }
+.door .lv { position: absolute; left: 22px; top: 18px; font-weight: 900; font-size: clamp(2.4rem, 3.6vw, 3.2rem); line-height: 1; color: #fff; letter-spacing: -.03em; text-shadow: 0 3px 18px rgba(0, 0, 0, .45); }
+.door .tx { padding: 16px 22px 18px; display: flex; flex-direction: column; flex: 1; }
+.door b { font-size: 1.2rem; } .door p { margin: 4px 0 12px; color: var(--muted); font-size: .95rem; }
+.door .go { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--pri); border-top: 1px solid var(--line); padding-top: 10px; }
+.door .go i { font-style: normal; transition: transform .3s; } .door:hover .go i { transform: translateX(6px); }
+.d-e .lv { color: #fff; } .d-e .tag { background: #fff3d6; color: #b07400; } .d-m .tag { background: #ffe3ec; color: #d23a68; } .d-h .tag { background: #e6ecf7; color: #2b3d63; }
+.tag { align-self: flex-start; font-size: .76rem; font-weight: 800; padding: 3px 9px; border-radius: 8px; margin-bottom: 8px; }
+
+/* 섹션 공통 */
+.sec { padding: clamp(80px, 12vh, 120px) 0; } .sec.alt { background: var(--bg2); }
+.kicker { color: var(--pri); font-weight: 800; letter-spacing: .14em; font-size: .8rem; }
+.h2 { font-weight: 900; font-size: clamp(1.8rem, 3.4vw, 2.6rem); line-height: 1.25; margin: 10px 0 12px; letter-spacing: -.03em; text-wrap: balance; }
+.sub { color: var(--muted); font-size: 1.08rem; margin: 0; max-width: 60ch; text-wrap: balance; }
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity .8s, transform .8s; } .reveal.in { opacity: 1; transform: none; }
+
+/* 차시 목록 */
+.lvrow { margin-top: 56px; display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.lvrow + .lvrow { margin-top: 64px; }
+.lvpic { position: relative; display: block; border-radius: 20px; overflow: hidden; aspect-ratio: 4 / 3; box-shadow: var(--shadow); }
+.lvpic img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s; } .lvpic:hover img { transform: scale(1.05); }
+.lvpic span { position: absolute; left: 20px; bottom: 14px; font-weight: 900; font-size: 2.2rem; color: #fff; text-shadow: 0 3px 16px rgba(0, 0, 0, .5); }
+.lvrow h3 { font-size: 1.45rem; margin: 0 0 4px; } .lvrow > div > p { color: var(--muted); margin: 0 0 16px; }
+.lessons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; }
+.lessons a { display: flex; gap: 14px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--line); transition: color .2s, padding .2s; }
+.lessons a:hover { color: var(--pri); padding-left: 6px; }
+.lessons small { color: var(--pri); font-weight: 800; min-width: 2.6em; font-variant-numeric: tabular-nums; }
+
+/* 푸터 */
+footer { padding: 28px 0 40px; color: #8590a8; font-size: .85rem; }
+footer { border-top: 1px solid var(--line); } footer .wrap { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.made { margin: 0; color: #4b5672; font-size: .95rem; line-height: 1.7; }
+
+
+/* 수업 목표(집필 의도) */
+.aims { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.it { margin: 0; padding: 26px 26px 22px; background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.it blockquote { margin: 0 0 18px; font-size: 1.04rem; line-height: 1.7; color: var(--ink); text-wrap: pretty; position: relative; padding-top: 30px; }
+.it blockquote::before { content: '“'; position: absolute; top: -18px; left: -4px; font-family: Georgia, 'Times New Roman', serif; font-size: 3.6rem; line-height: 1; color: var(--pri); }
+.it figcaption { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; display: flex; gap: 10px; }
+.it figcaption b { color: var(--pri); white-space: nowrap; }
+@media (max-width: 960px) { .aims { grid-template-columns: 1fr; } }
+
+/* 주제 지도 — 10주제 × 초·중·고 */
+.tmap { margin-top: 40px; background: #fff; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); }
+.tm-h, .tm-r { display: grid; grid-template-columns: minmax(180px, 1.1fr) repeat(3, minmax(0, 1fr)); }
+.tm-h span { padding: 14px 20px; font-weight: 800; font-size: .9rem; color: var(--muted); background: #f4f7fd; border-bottom: 1px solid var(--line); }
+.tm-h span:nth-child(2) { color: #b07400; } .tm-h span:nth-child(3) { color: #d23a68; } .tm-h span:nth-child(4) { color: #2b3d63; }
+.tm-r + .tm-r { border-top: 1px solid var(--line); }
+.tm-r > * { padding: 14px 20px; }
+.tm-t { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+.tm-t i { flex: none; width: 40px; height: 40px; border-radius: 12px; background: #eaf1ff; position: relative; }
+.tm-t i::after { content: ''; position: absolute; inset: 9px; background: var(--pri); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.tm-r a { display: block; border-left: 1px solid var(--line); transition: background .2s, color .2s; font-size: .97rem; line-height: 1.45; }
+.tm-r a small { display: block; color: var(--muted); font-size: .78rem; font-weight: 700; margin-bottom: 2px; }
+.tm-r a:hover { background: #f4f7fd; color: var(--pri); }
+.tm-r .none { border-left: 1px solid var(--line); color: #b8c0d0; }
+/* 수업 한 장면 */
+.gal { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.gc { position: relative; display: block; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); background: #fff; border: 1px solid var(--line); transition: transform .3s; }
+.gc:hover { transform: translateY(-4px); }
+.gc img { display: block; width: 100%; aspect-ratio: 1280 / 626; object-fit: cover; }
+.gc span { display: block; padding: 14px 18px 16px; font-weight: 700; } .gc span b { display: block; color: var(--pri); font-size: .82rem; margin-bottom: 2px; }
+@media (max-width: 960px) { .gal { grid-template-columns: 1fr 1fr; } .tm-h { display: none; } .tm-r { grid-template-columns: 1fr; } .tm-r a, .tm-r .none { border-left: 0; border-top: 1px dashed var(--line); } .tm-t { background: #f4f7fd; } }
+@media (max-width: 600px) { .gal { grid-template-columns: 1fr; } }
+@media (max-height: 760px) and (min-width: 961px) { .hero .wrap { padding-top: calc(var(--nav) + 14px); } h1 { margin: 10px 0 8px; } .door .pic { aspect-ratio: 16 / 7.4; } }
+/* 폰: 카드 셋이 첫 화면에 다 들어오게 가로 줄 카드로 */
+@media (max-width: 600px) {
+  .hero .wrap { padding: calc(var(--nav) + 18px) 0 28px; } h1 { font-size: 1.9rem; margin: 10px 0 6px; } .lead { font-size: .98rem; }
+  .levels { grid-template-columns: 1fr; gap: 10px; margin-top: 18px; }
+  .door { flex-direction: row; border-radius: 16px; } .door .pic { width: 40%; aspect-ratio: auto; flex: none; }
+  .door .lv { font-size: 1.7rem; left: 12px; top: 10px; } .door .tx { padding: 12px 14px; }
+  .door b { font-size: 1.02rem; } .door p { display: none; } .door .tag { margin-bottom: 4px; } .door .go { padding-top: 6px; font-size: .9rem; }
+}
+@keyframes up { from { opacity: 0; transform: translateY(24px); } }
+@media (max-width: 960px) {
+  .menu, .nav .btn { display: none; } .burger { display: block; }
+  .nav.open .menu { display: flex; flex-direction: column; position: absolute; top: var(--nav); left: 0; right: 0; padding: 18px 20px 24px; gap: 14px; background: #fff; border-bottom: 1px solid var(--line); }
+  .levels { gap: 12px; } .door .lv { font-size: 2rem; } .door p { font-size: .88rem; } .lvrow { grid-template-columns: 1fr; }
+  .hero::after { background: linear-gradient(180deg, rgba(247, 249, 253, .88) 0%, rgba(247, 249, 253, .7) 42%, rgba(247, 249, 253, .1) 72%, var(--bg) 100%); }
+  .hero .bg img { object-position: 70% 50%; }
+}
+@media (max-width: 600px) { .lessons { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { *, .reveal { animation: none !important; transition: none !important; opacity: 1; transform: none; } }
+</style>
+<style>/* 큰 모니터·TV 에서 가운데 작게 몰리지 않게 통째 확대, 작은 라벨 하한(2026-10-07) */
+@media (min-width: 1600px) { body { zoom: 1.25; } } @media (min-width: 1900px) { body { zoom: 1.4; } } @media (min-width: 2500px) { body { zoom: 1.8; } }
+.tag, .kicker, .badge, .lessons small, .tm-r a small { font-size: max(13px, .85em); } .brand i { font-size: 13px; }
+</style></head><body>
+<header class="nav" id="nav"><div class="wrap">
+  <a class="brand" href="/"><i>AI</i>AI 윤리 디지털 교과서</a>
+  <nav class="menu"><a href="/e/">초등</a><a href="/m/">중등</a><a href="/h/">고등</a><a href="#themes">주제 지도</a><a href="#scenes">수업 장면</a><a href="#lessons">차시 목록</a><a href="#aim">수업 목표</a></nav>
+  <button class="burger" aria-label="메뉴" onclick="document.getElementById('nav').classList.toggle('open')">☰</button>
+</div></header>
+
+<section class="hero">
+  <div class="bg" aria-hidden="true"><img src="/v2/cover/scene_0.jpg?v=1" alt="" class=on><img src="/v2/cover/scene_1.jpg?v=1" alt=""><img src="/v2/cover/scene_2.jpg?v=1" alt=""><img src="/v2/cover/scene_3.jpg?v=1" alt=""><img src="/v2/cover/scene_4.jpg?v=1" alt=""><img src="/v2/cover/scene_5.jpg?v=1" alt=""></div>
+  <div class="wrap">
+    <span class="badge"><i></i>광주 초·중·고 AI 윤리 교수·학습 자료</span>
+    <h1>AI와 함께 사는 법,<br><em>AI 윤리 디지털 교과서</em></h1>
+    <p class="lead">AI와 함께 생각하고, 질문하고, 즐겁게 배워 봅시다</p>
+    <nav class="levels" id="levels">
+  <a class="door d-e" href="/e/"><span class="pic"><video src="/v2/cover/e_s.mp4?v=5" poster="/e/hero.webp" autoplay muted loop playsinline></video><span class="lv">초등</span></span>
+    <span class="tx"><span class="tag">초등학교 · 10차시</span><b>AI 탐험대</b><p>AI와 함께하는 탐험으로 배우는 AI 윤리</p><span class="go">차시 보기 <i>→</i></span></span></a>
+  <a class="door d-m" href="/m/"><span class="pic"><video src="/v2/cover/m_s.mp4?v=4" poster="/m/hero.webp" autoplay muted loop playsinline></video><span class="lv">중등</span></span>
+    <span class="tx"><span class="tag">중학교 · 10차시</span><b>AI 윤리 웹툰 연재</b><p>우리 학교 이야기로 만나는 AI 윤리</p><span class="go">차시 보기 <i>→</i></span></span></a>
+  <a class="door d-h" href="/h/"><span class="pic"><video src="/v2/cover/h_s.mp4?v=4" poster="/h/hero.webp" autoplay muted loop playsinline></video><span class="lv">고등</span></span>
+    <span class="tx"><span class="tag">고등학교 · 10차시</span><b>AI 윤리 리포트</b><p>사회 이슈로 깊이 읽는 AI 윤리</p><span class="go">차시 보기 <i>→</i></span></span></a>
+    </nav>
+  </div>
+</section>
+
+
+<section class="sec" id="themes"><div class="wrap">
+  <span class="kicker reveal">CURRICULUM MAP</span>
+  <h2 class="h2 reveal">10가지 주제, 학교급마다 깊어지는 배움</h2>
+  <p class="sub reveal">같은 주제를 초등은 체험으로, 중등은 사례와 토론으로, 고등은 쟁점 분석으로 다시 만납니다.</p>
+  <div class="tmap reveal" id="tmap"><div class="tm-h"><span>주제</span><span>초등</span><span>중등</span><span>고등</span></div></div>
+</div></section>
+
+<section class="sec alt" id="scenes"><div class="wrap">
+  <span class="kicker reveal">IN CLASS</span>
+  <h2 class="h2 reveal">수업 한 장면</h2>
+  <p class="sub reveal">학교급마다 다른 세계관 속에서 사례를 만나고, 질문하고, 함께 정리합니다.</p>
+  <div class="gal">
+    <a class="gc reveal" href="/e/3"><img src="/v2/gallery/g1.jpg?v=4" alt="" loading="lazy"><span><b>초등 3차시</b>AI는 어떻게 생각할까요?</span></a>
+    <a class="gc reveal" href="/e/5"><img src="/v2/gallery/g2.jpg?v=4" alt="" loading="lazy"><span><b>초등 5차시</b>사진과 영상이 달라졌어요</span></a>
+    <a class="gc reveal" href="/m/4"><img src="/v2/gallery/g3.jpg?v=4" alt="" loading="lazy"><span><b>중등 4차시</b>많이 공유된 정보는 진짜일까?</span></a>
+    <a class="gc reveal" href="/m/6"><img src="/v2/gallery/g4.jpg?v=4" alt="" loading="lazy"><span><b>중등 6차시</b>AI 없이는 못 하겠어?</span></a>
+    <a class="gc reveal" href="/h/1"><img src="/v2/gallery/g5.jpg?v=4" alt="" loading="lazy"><span><b>고등 1차시</b>내 피드는 내가 고른 걸까?</span></a>
+    <a class="gc reveal" href="/h/5"><img src="/v2/gallery/g6.jpg?v=4" alt="" loading="lazy"><span><b>고등 5차시</b>AI 변형 콘텐츠의 공개와 피해 대응</span></a>
+  </div>
+</div></section>
+
+<section class="sec" id="lessons"><div class="wrap">
+  <span class="kicker reveal">LESSONS</span>
+  <h2 class="h2 reveal">차시 목록</h2>
+  <div id="lvrows"></div>
+</div></section>
+
+<section class="sec alt" id="aim"><div class="wrap">
+  <span class="kicker reveal">AIM</span>
+  <h2 class="h2 reveal">이런 학생으로 자라길 바랍니다</h2>
+  <p class="sub reveal">수업을 만든 선생님들이 직접 적은 바람입니다.</p>
+  <div class="aims">
+      <figure class="it reveal"><blockquote>수업이 끝나면 그림을 쓰기 전에 허락을 확인하고, 만든 사람과 출처, AI로 바꾼 사실을 표시하는 것을 당연하게 여기는 학생이 되길 바랍니다.</blockquote><figcaption><b>초등 2차시</b>내 그림도 소중해요</figcaption></figure>
+      <figure class="it reveal"><blockquote>수업이 끝나면 AI 결과를 볼 때 어떤 데이터와 근거로 판단했는지 먼저 확인하고, 결과를 무조건 믿지도 무서워하지도 않는 학생이 되길 바랍니다.</blockquote><figcaption><b>초등 3차시</b>AI는 어떻게 생각할까요?</figcaption></figure>
+      <figure class="it reveal"><blockquote>수업이 끝나면 참고 자료의 출처 표시와 AI 활용 표시를 서로 다른 것으로 구분해 기록하고, 다른 사람의 작품을 존중하며 AI를 책임 있게 활용하는 학생이 되길 바랍니다.</blockquote><figcaption><b>중등 2차시</b>AI와 만든 과제는 누구의 작품일까?</figcaption></figure>
+      <figure class="it reveal"><blockquote>수업이 끝나면 AI에게 묻기 전에 먼저 생각해 보고, AI가 도와줄 일과 내가 직접 할 일을 나누는 자기만의 원칙을 가진 학생이 되길 바랍니다.</blockquote><figcaption><b>중등 6차시</b>AI 없이는 못 하겠어?</figcaption></figure>
+      <figure class="it reveal"><blockquote>수업이 끝나면 추천의 편리함은 누리되 다른 관점을 스스로 찾아보고, 이용자와 플랫폼이 지켜야 할 기준을 근거를 들어 제안할 수 있는 학생이 되길 바랍니다.</blockquote><figcaption><b>고등 1차시</b>추천 알고리즘과 관점 다양성</figcaption></figure>
+      <figure class="it reveal"><blockquote>수업이 끝나면 AI를 활용한 창작물을 공개하기 전에 스스로 점검 질문을 던지고 필요한 조치를 설명할 수 있는 학생이 되길 바랍니다.</blockquote><figcaption><b>고등 2차시</b>AI 활용 창작물과 출처 표시</figcaption></figure>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <p class="made">이 자료는 광주광역시교육청 AI교육원과 광주교육대학교 산학협력단이 함께 개발한 AI 윤리 교수·학습 자료입니다.<br>선생님들의 수업과 학생들의 배움에 도움이 되길 바랍니다.</p>
+  <span>삽화·영상은 AI로 제작했습니다</span>
+</div></footer>
+
+<script>
+{ const im = document.querySelectorAll('.hero .bg img'); let k = 0;  // 6초마다 다음 장면
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { im[k].classList.remove('on'); k = (k + 1) % im.length; im[k].classList.add('on'); }, 6000); }
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('solid', scrollY > 40); addEventListener('scroll', onScroll, { passive: true }); onScroll();
+document.querySelectorAll('.menu a').forEach(a => a.addEventListener('click', () => nav.classList.remove('open')));
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15 });
+const watch = () => document.querySelectorAll('.reveal:not(.in)').forEach(el => io.observe(el)); watch();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LV = [['elem', 'e', '초등', 'AI 탐험대', '초등학교 · 10차시', '차시'], ['mid', 'm', '중등', 'AI 윤리 웹툰 연재', '중학교 · 10차시', '차시'], ['high', 'h', '고등', 'AI 윤리 리포트', '고등학교 · 10차시', '차시']];
+
+const THEMES = [['디지털 리터러시', 'book-open-check', 'elem-1', 'mid-1', 'high-1'], ['저작권', 'copyright', 'elem-2', 'mid-2', 'high-2'],
+  ['AI 이해와 공정성', 'brain-circuit', 'elem-3', 'mid-3', 'high-3'], ['허위정보 대응', 'newspaper', 'elem-4', 'mid-4', 'high-4'],
+  ['딥페이크 대응', 'scan-face', 'elem-5', 'mid-5', 'high-5'], ['AI 과의존 예방', 'smartphone', 'elem-6', 'mid-6', 'high-6'],
+  ['사람 중심 AI', 'heart-handshake', 'elem-7', 'mid-9', 'high-9'], ['개인정보 보호', 'shield-check', 'elem-8', 'mid-7', 'high-7'],
+  ['책임 있는 AI 활용', 'scale', 'elem-9', 'mid-8', 'high-8'], ['생성형 AI', 'sparkles', 'elem-10', 'mid-10', 'high-10']];
+const KL = { elem: 'e', mid: 'm', high: 'h' }, LVK = { elem: '초등', mid: '중등', high: '고등' };
+fetch('/api/v2/lessons.json').then(r => r.json()).then(all => {
+  const by = Object.fromEntries(all.map(l => [l.id, l]));
+  document.getElementById('tmap').insertAdjacentHTML('beforeend', THEMES.map(([t, ic, ...ids]) => `<div class="tm-r"><span class="tm-t"><i style="--ico:url(/v2/icons/${ic}.svg)"></i>${t}</span>` +
+    ids.map(id => { const l = by[id]; if (!l) return '<span class="none">—</span>'; const [lv, no] = id.split('-'); return `<a href="/${KL[lv]}/${no}"><small>${LVK[lv]} ${no}차시</small>${esc(l.title)}</a>`; }).join('') + '</div>').join(''));
+  document.getElementById('lvrows').innerHTML = LV.map(([lv, k, name, world, desc, unit]) => {
+    const ls = all.filter(l => l.level === lv).sort((a, b) => a.no - b.no);
+    return `<div class="lvrow reveal"><a class="lvpic" href="/${k}/"><img src="/${k}/hero.webp" alt="" loading="lazy"><span>${name}</span></a>
+      <div><h3>${world}</h3><p>${desc}</p><div class="lessons">${ls.map(l => `<a href="/${k}/${l.no}"><small>${l.no}${unit}</small><span>${esc(l.title)}</span></a>`).join('')}</div></div></div>`;
+  }).join('');
+  watch();
+});
+</script>
+</body></html>

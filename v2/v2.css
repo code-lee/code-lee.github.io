@@ -1,0 +1,509 @@
+/* 105 v2 공용 뼈대 — 수업 모드·학생 폰 v2·표지·포털·차시 홈. 학교급 모양은 /e|m|h/theme.css 가 덮는다 */
+body.v2 { --sl-font: clamp(1.1rem, calc(1.7 * var(--vw)), 1.9rem); }
+.big { font-size: 1.2em; padding: 16px 28px; }
+
+/* ---------- 수업 모드 ---------- */
+body.cl { height: calc(100 * var(--vh)); overflow: hidden; }
+body.cl #app { height: calc(100 * var(--vh)); display: grid; grid-template-rows: auto 1fr auto; }
+.cl-top { display: flex; align-items: center; gap: 18px; padding: 10px 20px; border-bottom: var(--bw) solid var(--line); background: var(--bg2); }
+.cl-tt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; max-width: 32%; }
+.cl-tt small { color: var(--muted); } .cl-tt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cl-phases { flex: 1; display: flex; gap: 4px; position: relative; height: 34px; }
+.cl-phases .ph { display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; background: var(--line); color: var(--muted); font-weight: 700; font-size: .9rem; opacity: .7; }
+.cl-phases .ph small { font-weight: 400; }
+.cl-phases .ph.on { background: var(--pri); color: var(--pri-ink); opacity: 1; }
+.cl-now { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--hot); border-radius: 2px; transition: left 1s linear; }
+.cl-time { border: 0; background: none; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.1rem; padding: 6px 10px; border-radius: 8px; }
+.cl-time.over { color: var(--hot); background: color-mix(in srgb, var(--hot) 14%, transparent); }
+.cl-join { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.cl-join .qr svg { width: 46px; height: 46px; background: #fff; border-radius: 4px; }
+.cl-body { min-height: 0; display: grid; grid-template-columns: 1fr; }
+.cl-body.with-side { grid-template-columns: 1fr minmax(260px, 26%); }
+.cl-notes { border-left: var(--bw) solid var(--line); background: var(--bg2); padding: 16px; overflow-y: auto; font-size: .95rem; }
+.cl-notes p { margin: 8px 0; white-space: pre-line; }
+.cl-bar { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: var(--bw) solid var(--line); background: var(--bg2); flex-wrap: wrap; }
+.cl-bar .sp { flex: 1; } .cl-count { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 64px; text-align: center; }
+.cl-bar .jump { max-width: 280px; padding: 8px; border-radius: 10px; border: var(--bw) solid var(--line); background: var(--card); }
+
+/* 슬라이드 */
+.slide { overflow-y: auto; padding: clamp(18px, calc(3 * var(--vh)), 40px) clamp(24px, calc(5 * var(--vw)), 90px); font-size: var(--sl-font); position: relative; }
+.sl-chip { display: inline-block; font-size: .7em; font-weight: 700; padding: 4px 14px; border-radius: 99px; background: color-mix(in srgb, var(--pri) 15%, transparent); color: var(--pri); }
+.sl-h { font-size: 1.7em; line-height: 1.25; margin: .35em 0 .6em; }
+.sl-main.has-media { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 0 40px; align-items: start; }
+.sl-media .media { margin: 0 0 14px; } .sl-media img, .sl-media video { width: 100%; border-radius: var(--r); }
+.slide .blocks > * { transition: opacity .45s, transform .45s; }
+.slide .blocks > .hold { opacity: 0; transform: translateY(14px); pointer-events: none; }
+.slide .blocks > .shown { opacity: 1; transform: none; }
+.sl-title { min-height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.sl-title h1 { font-size: 3.1em; line-height: 1.15; margin: .2em 0; animation: rise .7s both; }
+.sl-title .sl-no { font-size: 1.1em; color: var(--muted); margin: 0 0 1em; }
+.sl-area { color: var(--muted); font-weight: 600; }
+.sl-intro { font-size: 1.15em; }
+@keyframes rise { from { opacity: 0; transform: translateY(40px); } }
+.act-peek { opacity: .9; }
+.act-modes { display: flex; gap: 16px; margin: 28px 0 10px; flex-wrap: wrap; }
+.act-ctl { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; position: sticky; bottom: 0; padding: 10px 0; background: linear-gradient(transparent, var(--bg) 40%); }
+.act-n b { font-size: 1.4em; font-variant-numeric: tabular-nums; }
+.act-demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.demo-input { background: var(--card); border: var(--bw) solid var(--line); border-radius: var(--r); padding: 20px; font-size: .8em; }
+
+/* ---------- 학생 폰 v2 ---------- */
+.look-board .echo { margin: 0 20px; padding: 18px; border-radius: var(--r); background: var(--card); border: var(--bw) solid var(--line); }
+.look-board .echo small { color: var(--muted); display: block; } .look-board .echo b { display: block; font-size: 1.15rem; margin: 4px 0; }
+.sent { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ink); padding: 10px 14px; border-radius: 12px; font-weight: 600; }
+
+/* ---------- 표지·포털·차시 홈 ---------- */
+body.pg a { color: inherit; }
+.cover { min-height: calc(100 * var(--vh)); display: grid; place-items: center; background: linear-gradient(160deg, #eef6ff, #fff6e8 50%, #121620); }
+.cover-in { width: min(1100px, 100% - 32px); text-align: center; padding: 40px 0; }
+.cover-in h1 { font-size: clamp(2rem, calc(6 * var(--vw)), 4rem); margin: 0; letter-spacing: -.02em; }
+.doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin: 40px 0; }
+.door { display: flex; flex-direction: column; justify-content: flex-end; min-height: 320px; padding: 26px; border-radius: 24px; text-decoration: none; text-align: left; box-shadow: var(--shadow); transition: transform .2s; }
+.door:hover { transform: translateY(-6px); }
+.door b { font-size: 2rem; } .door span { opacity: .8; }
+.d-e { background: linear-gradient(180deg, #8fd3ff, #4f7cff); color: #fff; border-radius: 40px; }
+.d-m { background: #fffdf6; color: #141414; border: 3px solid #141414; box-shadow: 8px 8px 0 #141414; border-radius: 6px; }
+.d-h { background: #0d1015; color: #ebe7df; border-radius: 2px; }
+.cover-foot { color: var(--muted); }
+.portal, .home { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 28px 0 60px; }
+.back { display: inline-block; margin-bottom: 14px; color: var(--muted) !important; text-decoration: none; }
+.p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.p-card { display: flex; flex-direction: column; gap: 6px; padding: 20px; min-height: 150px; text-decoration: none; background: var(--card); border: var(--bw) solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); transition: transform .15s; }
+.p-card:hover { transform: translateY(-3px); } .p-card small, .p-card span { color: var(--muted); font-size: .9rem; } .p-card b { font-size: 1.2rem; flex: 1; }
+.home h1 { font-size: clamp(1.8rem, calc(5 * var(--vw)), 3rem); margin: .2em 0 .6em; }
+.flow { display: flex; gap: 6px; } .flow .ph { padding: 14px; border-radius: 12px; background: var(--card); border: var(--bw) solid var(--line); min-width: 0; }
+.flow .ph b { display: block; } .flow .ph small { color: var(--muted); }
+.home .row { margin-top: 28px; }
+@media (max-width: 700px) {
+  .sl-main.has-media, .act-demo { grid-template-columns: 1fr; }
+  .cl-tt { display: none; } .cl-bar .jump { display: none; }
+  .flow { flex-direction: column; } .flow .ph { flex: none !important; }
+}
+
+/* ---------- 클릭형 블록·배경·캐릭터 ---------- */
+.slide { isolation: isolate; }
+.slide.has-bg { color: var(--ink); }
+.sl-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; pointer-events: none; }
+.slide.has-bg::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 92%, transparent) 0 45%, color-mix(in srgb, var(--bg) 55%, transparent)); pointer-events: none; }
+.sl-bg.kb { animation: kb 30s ease-in-out infinite alternate; }
+@keyframes kb { from { transform: scale(1); } to { transform: scale(1.12) translate(-2%, -1%); } }
+.sl-char { position: absolute; right: 2%; bottom: 0; height: min(calc(42 * var(--vh)), 380px); z-index: 1; pointer-events: none; animation: bob 3.2s ease-in-out infinite; filter: drop-shadow(0 10px 20px #0003); }
+@keyframes bob { 50% { transform: translateY(-10px); } }
+.slide > .sl-chip, .slide > .sl-h, .slide > .sl-main, .slide > .sl-title, .slide > .sl-intro, .slide > .act-demo, .slide > .act-ctl { position: relative; z-index: 2; }
+.b-letter { font-family: var(--letter-font, var(--hfont)); font-size: 1.9em; line-height: 1.2; margin: .2em 0 .4em; }
+.b-text.big { font-size: 1.45em; font-weight: 800; line-height: 1.35; }
+.b-cover { display: block; width: 100%; min-height: 3.2em; margin: 12px 0; padding: 18px 24px; border: 3px dashed var(--pri); border-radius: var(--r); background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--pri) 10%, var(--card)) 0 14px, var(--card) 14px 28px); font-size: 1em; text-align: left; }
+.b-cover .cv-hint { color: var(--pri); font-weight: 800; } .b-cover .cv-hint::before { content: '? '; }
+.b-cover.open { border-style: solid; background: var(--card); box-shadow: var(--shadow); }
+.b-cover.open .cv-text { display: block; font-size: 1.3em; font-weight: 800; animation: pop .5s both; white-space: pre-line; }
+.b-flip { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 12px 0; }
+.fl-card { perspective: 900px; border: 0; background: none; padding: 0; min-height: 150px; font-size: .9em; text-align: center; }
+.fl-in { position: relative; display: block; height: 100%; min-height: 150px; transition: transform .6s; transform-style: preserve-3d; }
+.fl-card.open .fl-in { transform: rotateY(180deg); }
+.fl-front, .fl-back { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; border-radius: var(--r); backface-visibility: hidden; white-space: pre-line; box-shadow: var(--shadow); border: var(--bw) solid var(--line); }
+.fl-front { background: var(--pri); color: var(--pri-ink); font-weight: 800; }
+.fl-back { background: var(--card); transform: rotateY(180deg); }
+.b-icons { display: flex; flex-wrap: wrap; gap: 18px; margin: 14px 0; }
+.b-icons figure { margin: 0; flex: 1 1 140px; text-align: center; animation: pop .5s var(--d) both; }
+.b-icons img { width: min(120px, 60%); aspect-ratio: 1; object-fit: contain; }
+.b-icons .ic-ph { display: inline-grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: var(--pri); color: var(--pri-ink); font-weight: 900; font-size: 1.6em; }
+.b-icons figcaption { font-weight: 700; margin-top: 6px; }
+.b-stamp { display: inline-grid; place-items: center; width: 7em; height: 7em; border: 6px double var(--hot); border-radius: 50%; color: var(--hot); font-weight: 900; transform: rotate(-12deg); margin: 10px 0; }
+.b-stamp.shown { animation: stamp .45s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes stamp { from { transform: rotate(-12deg) scale(2.4); opacity: 0; } }
+.slide:not(.layout-activity) { cursor: pointer; }
+.slide button, .slide input, .slide textarea { cursor: auto; } .slide button { cursor: pointer; }
+
+
+/* ---------- 포털 공통 히어로 ---------- */
+.p-hero { position: relative; min-height: 300px; display: flex; align-items: flex-end; overflow: hidden; }
+.p-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: kb 40s ease-in-out infinite alternate; }
+.p-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 30%, var(--bg)); }
+.p-hero-in { position: relative; z-index: 1; width: min(1100px, 100% - 32px); margin: 0 auto; padding: 24px 0; }
+.p-hero h1 { font-size: clamp(2.2rem, calc(7 * var(--vw)), 4.2rem); margin: 0; } .p-hero p { margin: 4px 0 0; font-weight: 600; }
+.p-ph { display: grid; place-items: center; width: 100%; height: 100%; font-size: 3rem; font-weight: 900; color: var(--pri-ink); background: var(--pri); }
+/* 표지 문 — 학교급 포털 히어로를 문 그림으로 */
+body.pg.cover .door { position: relative; overflow: hidden; color: #fff; background-size: cover; background-position: center; isolation: isolate; }
+body.pg.cover .door::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(transparent 35%, #000a); }
+body.pg.cover .d-e { background-image: url(/e/hero.webp); } body.pg.cover .d-m { background-image: url(/m/hero.webp); } body.pg.cover .d-h { background-image: url(/h/hero.webp); }
+body.pg.cover .door b { font-size: 2.2rem; text-shadow: 0 2px 8px #0008; } body.pg.cover .door span { opacity: .95; text-shadow: 0 1px 4px #0008; }
+body.pg.cover .d-m b { font-family: 'Black Han Sans', var(--font); } body.pg.cover .d-e b { font-family: 'Jua', var(--font); }
+/* 구석 캐릭터 자리는 비워 둔다(글을 가리지 않게) */
+.slide.has-char { padding-right: max(22%, 220px); }
+.slide.has-char .sl-char { right: 1.5%; height: min(calc(46 * var(--vh)), 400px); }
+.slide.has-char .sl-main.has-media { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+/* 한글 줄바꿈 — 어절 단위로 끊고 제목은 줄 길이를 고르게 */
+body.v2 { word-break: keep-all; overflow-wrap: break-word; }
+body.v2 h1, body.v2 h2, body.v2 .sl-h, body.v2 .b-letter, body.v2 .b-text.big, body.v2 .q, body.v2 .p-card b, body.v2 .isle b, body.v2 .ep b, body.v2 .mag-tx b { text-wrap: balance; }
+body.v2 p, body.v2 li, body.v2 td { text-wrap: pretty; }
+
+/* ---------- 차시 홈 ---------- */
+.hm-hero { position: relative; min-height: min(calc(62 * var(--vh)), 560px); display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; }
+.hm-hero video, .hm-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.hm-hero::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 20%, transparent), color-mix(in srgb, var(--bg) 70%, transparent) 55%, var(--bg)); }
+.hm-in { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 30px 0 34px; }
+.hm-no { display: inline-block; font-family: var(--letter-font, var(--hfont)); font-size: 1.1rem; padding: 4px 16px; border-radius: 99px; background: var(--pri); color: var(--pri-ink); }
+.hm-hero h1.b-letter { font-size: clamp(2.2rem, calc(5.6 * var(--vw)), 4rem); margin: .3em 0 .2em; }
+.hm-meta { margin: 0 0 22px; font-weight: 600; color: var(--muted); }
+.hm-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; margin-bottom: 18px; }
+.hm-card { background: var(--card); border: var(--bw) solid var(--line); border-radius: var(--r); padding: 22px 26px; box-shadow: var(--shadow); }
+.hm-card h3 { margin: 0 0 12px; font-size: 1.1rem; }
+.hm-card ol { margin: 0; padding-left: 1.2em; } .hm-card li { margin: 6px 0; }
+.hm-facts { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; } .hm-facts dt { color: var(--muted); } .hm-facts dd { margin: 0; font-weight: 600; }
+.hm-steps { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0 !important; margin-top: 16px !important; counter-reset: st; }
+.hm-steps li { counter-increment: st; padding: 8px 14px; border-radius: 99px; background: color-mix(in srgb, var(--pri) 10%, transparent); font-weight: 600; font-size: .92rem; }
+.hm-steps li small { color: var(--pri); margin-right: 6px; }
+@media (max-width: 800px) { .hm-grid { grid-template-columns: 1fr; } }
+.hm-in .back { display: block; margin-bottom: 14px; }
+
+/* 살아 있는 배경 — 부드러운 카메라 이동 + 빛 입자(떨림 없는 GPU transform) */
+.sl-bgwrap { position: absolute; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.sl-bgwrap .sl-bg { position: absolute; inset: -5%; width: 110%; height: 110%; object-fit: cover; z-index: 0; will-change: transform; backface-visibility: hidden; }
+.sl-bg.pan { animation: slpan 20s ease-in-out infinite alternate; } .sl-bg.pan2 { animation-name: slpan2; }
+@keyframes slpan { from { transform: scale(1) translate3d(-2%, 0, 0); } to { transform: scale(1.1) translate3d(2.5%, -1.5%, 0); } }
+@keyframes slpan2 { from { transform: scale(1.1) translate3d(2%, 1%, 0); } to { transform: scale(1) translate3d(-2.5%, -1%, 0); } }
+.sl-fx { position: absolute; inset: -50% 0 0; opacity: .7;
+  background-image: radial-gradient(2px 2px at 12% 30%, #fff, transparent), radial-gradient(3px 3px at 28% 72%, #fff9, transparent), radial-gradient(2px 2px at 46% 18%, #fff, transparent),
+    radial-gradient(3px 3px at 63% 55%, #fffa, transparent), radial-gradient(2px 2px at 78% 82%, #fff, transparent), radial-gradient(3px 3px at 90% 38%, #fff9, transparent);
+  background-size: 560px 560px; animation: slfx 28s linear infinite; }
+@keyframes slfx { to { transform: translate3d(0, 33%, 0); } }
+body[data-tone="high"] .sl-fx { opacity: .35; }
+/* 본문 그림도 살짝 떠 있게 */
+.sl-media .media { animation: lift 6s ease-in-out infinite; } .sl-media .media:nth-child(2) { animation-delay: -3s; }
+@keyframes lift { 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .sl-bg.pan, .sl-fx, .sl-media .media { animation: none; } }
+
+/* 교실 화면 기준 글자 — 수업 모드는 화면 폭에 맞춰 기본 글자를 키운다(1280폭 18px · 1920폭 26px). 넘치면 .sl-fit 이 줄인다 */
+html:has(body.cl) { font-size: clamp(15px, calc(1.25 * var(--vw)), 28px); }
+.sl-fit { position: relative; z-index: 2; transform-origin: top left; }
+.sl-chip { font-size: .78em; }
+/* 그림 높이 한도 — 그림 하나가 화면을 다 먹지 않게 */
+.slide .blocks .media img, .slide .blocks .media video { max-height: calc(40 * var(--vh)); width: auto; max-width: 100%; display: block; margin: 0 auto; }
+.slide .sl-media img, .slide .sl-media video { max-height: calc(58 * var(--vh)); object-fit: cover; }
+/* 칠판 활동 입력 — 칸이 많으면 두 줄 배치, 카드 미리보기·저장 버튼은 칠판에선 숨김(오른쪽 결과가 대신 보여 줌) */
+.demo-input > div:has(> .field:nth-of-type(4)) { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+.demo-input > div:has(> .field:nth-of-type(4)) > :not(.field) { grid-column: 1 / -1; }
+.demo-input .card-out, .demo-input .hint:has(+ .card-out), .demo-input .row .ghost { display: none; }
+.demo-input .inp { font-size: 1rem; } .demo-input textarea.inp { min-height: 3.2em; }
+/* 교실 TV 글자 하한 — 학교급 테마와 관계없이 수업 화면 글자는 1rem(1280폭 18.6px) 아래로 안 내려간다 */
+body.cl { --sl-font: clamp(1.25rem, calc(1.65 * var(--vw)), 2.4rem); }
+body.cl .slide :is(.f-label, .hint, small, figcaption, .bar-l, .bar-n, .sd-bins span, .lab-card b, .lab-card small, .opt, .sc, .bin, .inp, label, dd, dt, td, th, li, p, .cs span, .node span) { font-size: max(1rem, 1em); }
+body.cl .sl-chip { font-size: max(1rem, .8em); }
+body.cl .act-ctl { font-size: 1rem; }
+
+/* 활동 배치 — 결과가 없으면 입력칸을 넓게, 그림은 좁은 옆 칸. 조작 버튼은 슬라이드 아래 고정(화면 맞춤에서 안 줄어듦) */
+.act-demo.solo { grid-template-columns: 1fr; } .act-demo.solo .demo-out { display: none; }
+.act-demo.with-media { grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); }
+.slide.has-ctl { padding-bottom: 92px; }
+.slide.has-ctl > .act-ctl { position: absolute; left: clamp(24px, calc(5 * var(--vw)), 90px); right: clamp(24px, calc(5 * var(--vw)), 90px); bottom: 14px; margin: 0; z-index: 3; background: none;
+  padding: 10px 14px; border-radius: 16px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(8px); border: var(--bw) solid var(--line); }
+.slide.has-ctl.has-char { padding-bottom: 92px; }
+
+/* ===== TV 16:9 배치 — 학생 폰용 세로 배치를 칠판용 가로 배치로 ===== */
+/* 비교: 표·목록·카드는 좌우 두 칸, 안내 문장·레터링은 한 줄 전체 */
+body.cl .layout-compare .blocks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 28px; align-items: start; }
+body.cl .layout-compare .blocks > :is(.b-text, .b-letter, .b-cover, .b-stamp, .b-icons, .b-flip) { grid-column: 1 / -1; }
+body.cl .layout-compare .blocks > .media img { max-height: calc(16 * var(--vh)); }
+/* 항목이 많은 활동(분류·척도·배분·보기)은 여러 칸 격자 */
+body.cl .demo-input > div:has(> .sort-item:nth-of-type(3)), body.cl .demo-input .rate:has(> .rate-row:nth-of-type(3)),
+body.cl .demo-input > div:has(> .alloc:nth-of-type(3)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; align-items: start; }
+body.cl .demo-input > div:has(> .sort-item:nth-of-type(7)), body.cl .demo-input .rate:has(> .rate-row:nth-of-type(7)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.cl .demo-input > div:has(> .sort-item:nth-of-type(3)) > :not(.sort-item), body.cl .demo-input > div:has(> .alloc:nth-of-type(3)) > :not(.alloc) { grid-column: 1 / -1; }
+body.cl .demo-input .opts:has(> .opt:nth-child(5)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.cl .demo-input :is(.sort-item, .rate-row, .alloc) { margin: 6px 0; padding: 10px 12px; box-shadow: none; }
+body.cl .demo-input .opt { padding: 10px 14px; }
+body.cl .demo-input { padding: 16px 18px; font-size: 1em; }
+/* 단서·표는 글자를 줄이지 말고 표 안 여백만 줄인다 */
+body.cl .slide .b-table th, body.cl .slide .b-table td { padding: 6px 10px; }
+body.cl .slide .clue { margin: 8px 0; padding: 12px 14px; }
+body.cl .slide .clue.locked { display: none; }   /* 아직 안 열린 단서는 칠판에서 자리만 차지 — 열리면 나온다 */
+/* 위·아래 막대 얇게 — 1280×720 프로젝터에서도 슬라이드 높이를 최대한 */
+body.cl .cl-top { padding: 6px 16px; gap: 14px; } body.cl .cl-phases { height: 28px; } body.cl .cl-time { font-size: 1rem; padding: 4px 8px; }
+body.cl .cl-bar { padding: 6px 12px; gap: 6px; } body.cl .cl-bar :is(.ghost, .go) { padding: 7px 13px; font-size: .88rem; }
+body.cl .cl-bar .jump { padding: 6px; font-size: .88rem; }
+body.cl .cl-bar .act-ctl { display: flex; align-items: center; gap: 6px; margin: 0 0 0 10px; padding: 0 0 0 12px; border-left: 1px solid var(--line); position: static; background: none; }
+body.cl .cl-bar .act-n { font-size: .9rem; } body.cl .cl-bar .act-n b { font-size: 1.1rem; }
+body.cl .slide { padding-top: clamp(14px, calc(2.4 * var(--vh)), 32px); padding-bottom: clamp(14px, calc(2.4 * var(--vh)), 32px); }
+body.cl .sl-h { margin: .2em 0 .45em; }
+body.cl .demo-input .lab-set { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+body.cl .demo-input .lab-card svg { max-height: 70px; }
+body.cl .lab.lab2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0 22px; align-items: start; }
+body.cl .slide .b-bubble b { font-size: max(1rem, .9em); }
+/* 옆 칸 그림이 여러 장이면 높이를 나눠 갖는다 */
+.slide .sl-media:has(> .media:nth-child(2)) img, .slide .sl-media:has(> .media:nth-child(2)) video { max-height: calc(30 * var(--vh)); }
+.slide .sl-media:has(> .media:nth-child(3)) img, .slide .sl-media:has(> .media:nth-child(3)) video { max-height: calc(20 * var(--vh)); }
+.slide .sl-media .media { margin-bottom: 10px; }
+
+/* ---------- 사이트 공통 상단 메뉴·하단(포털·차시 홈) ---------- */
+.site-nav { position: sticky; top: 0; z-index: 40; background: rgba(255, 255, 255, .86); backdrop-filter: blur(14px); border-bottom: 1px solid #e1e7f2; color: #142039; font-family: 'Pretendard Variable', Pretendard, sans-serif; }
+.sn-in { width: min(1180px, 100% - 32px); margin: 0 auto; display: flex; align-items: center; gap: 20px; }
+.site-nav .sn-in { height: 60px; }
+.sn-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: #142039 !important; text-decoration: none; white-space: nowrap; }
+.sn-brand i { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #2f6bff, #6aa0ff); color: #fff; display: grid; place-items: center; font-style: normal; font-size: .74rem; font-weight: 900; }
+.site-nav nav { margin-left: auto; display: flex; gap: 6px; }
+.site-nav nav a { padding: 7px 14px; border-radius: 99px; font-weight: 700; color: #36425e !important; text-decoration: none; }
+.site-nav nav a:hover { background: #eef3fb; } .site-nav nav a.on { background: #2f6bff; color: #fff !important; }
+.site-foot { margin-top: 60px; padding: 26px 0 36px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+.site-foot .sn-in { justify-content: space-between; flex-wrap: wrap; } .site-foot p { margin: 0; }
+body[data-tone="high"] .site-nav { background: rgba(13, 16, 21, .86); border-color: #2a303b; } body[data-tone="high"] .sn-brand { color: #ebe7df !important; }
+body[data-tone="high"] .site-nav nav a { color: #c9c6be !important; } body[data-tone="high"] .site-nav nav a:hover { background: #1c222c; }
+.p-hero { margin-top: 0; } .p-hero .back { display: none; }
+
+/* ===== 디자인 검수 1회차 공통 수정 ===== */
+/* 2) 그림: 흰 카드 없이 꽉 채움(레터박스 X) */
+body.cl .slide .media { background: none; border: 0; padding: 0; box-shadow: none; border-radius: var(--r); overflow: hidden; }
+body.cl .slide .sl-media img, body.cl .slide .sl-media video { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--r); box-shadow: 0 18px 40px -22px #0007; }
+body.cl .slide .blocks .media:not(.is-icon) img, body.cl .slide .blocks .media:not(.is-icon) video { width: 100%; max-width: 760px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--r); }
+/* 3) 아이콘은 작게 */
+body.cl .slide .media.is-icon { display: inline-block; } body.cl .slide .media.is-icon img { width: auto; height: auto; max-height: 120px; max-width: 160px; aspect-ratio: auto; object-fit: contain; box-shadow: none; }
+body.cl .slide .b-icons img { max-height: 96px; }
+/* 5) 결과는 한 줄 전체, 빈 결과 안내 */
+body.cl .sl-main > .result-board { grid-column: 1 / -1; }
+body.cl .result-empty { display: grid; place-items: center; gap: 8px; padding: 40px 24px; border: 2px dashed var(--line); border-radius: var(--r); background: color-mix(in srgb, var(--card) 88%, transparent); text-align: center; grid-column: 1 / -1; }
+body.cl .result-empty b { font-size: 1.4em; } body.cl .result-empty span { color: var(--muted); }
+/* 6) 배경 위 글 칸은 반투명 패널 */
+body.cl .slide.has-bg .sl-text, body.cl .slide.has-bg .demo-input, body.cl .slide.has-bg .result-board, body.cl .slide.has-bg .sl-intro {
+  background: color-mix(in srgb, var(--card) 86%, transparent); backdrop-filter: blur(8px); border-radius: var(--r); padding: clamp(14px, calc(2 * var(--vw)), 24px); border: var(--bw) solid color-mix(in srgb, var(--line) 70%, transparent); }
+body.cl .slide.has-bg .sl-intro { padding: 10px 18px; }
+body.cl .slide.has-bg .sl-text .blocks > .b-table { background: none; }
+/* 7) 슬라이드 안 레터링은 절제(표지만 화려하게) */
+body.v2[data-tone="elem"] .slide:not(.layout-title) .b-letter { -webkit-text-stroke: 0; text-shadow: none; color: var(--pri); }
+body.v2[data-tone="mid"] .slide:not(.layout-title) .b-letter { -webkit-text-stroke: 0; text-shadow: 3px 3px 0 #14141422; }
+/* 8) 내용이 적으면 세로 가운데 */
+body.cl .slide:not(.layout-activity) { display: flex; flex-direction: column; }
+/* 9) 도장: 글자 길이에 맞춰 */
+body.cl .b-stamp { width: auto; min-width: 7em; height: auto; aspect-ratio: 1; padding: 1.2em; font-size: .9em; text-align: center; text-wrap: balance; }
+/* 1) 0.8배에서도 넘치는 활동은 입력칸 안에서 스크롤 */
+body.cl .slide.layout-activity .demo-input { max-height: calc(calc(100 * var(--vh)) - 230px); overflow: auto; }
+body.cl .fl-card { font-size: 1em; min-height: 6em; } body.cl .fl-in, body.cl .fl-card { min-height: 6em; }
+
+/* 아이콘 — Lucide 선 기호를 학교급 색으로 */
+.ico { display: inline-block; width: 1em; height: 1em; background: currentColor; -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.b-icons figure .ico { width: 64px; height: 64px; padding: 18px; box-sizing: content-box; color: var(--pri); background-color: var(--pri);
+  -webkit-mask: none; mask: none; position: relative; border-radius: 50%; background: color-mix(in srgb, var(--pri) 12%, transparent); }
+.b-icons figure .ico::after { content: ''; position: absolute; inset: 18px; background: var(--pri); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.b-ico { display: inline-grid; place-items: center; width: 110px; height: 110px; border-radius: 28px; background: color-mix(in srgb, var(--pri) 12%, transparent); margin: 8px 0; }
+.b-ico .ico { width: 60px; height: 60px; color: var(--pri); }
+body[data-tone="mid"] .b-icons figure .ico, body[data-tone="mid"] .b-ico { border: 2.5px solid #141414; box-shadow: 4px 4px 0 #141414; }
+body.cl .sl-chip { font-size: max(1.25rem, .8em); }
+/* 슬라이드 전환 — 넘길 때 옆에서 미끄러져 들어옴(배경은 그대로라 눈이 편하다) */
+.slide.enter-r > .sl-fit { animation: slin-r .55s cubic-bezier(.2, .8, .2, 1) both; }
+.slide.enter-l > .sl-fit { animation: slin-l .55s cubic-bezier(.2, .8, .2, 1) both; }
+.slide.enter-r > .sl-bgwrap, .slide.enter-l > .sl-bgwrap { animation: bgin .9s ease both; }
+@keyframes slin-r { from { opacity: 0; transform: translateX(48px); } } @keyframes slin-l { from { opacity: 0; transform: translateX(-48px); } }
+@keyframes bgin { from { opacity: .3; } }
+.slide .sl-char { animation: bob 3.2s ease-in-out infinite, charin .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes charin { from { opacity: 0; transform: translateY(60px) scale(.9); } }
+@media (prefers-reduced-motion: reduce) { .slide.enter-r > .sl-fit, .slide.enter-l > .sl-fit { animation: none; } }
+
+/* ===== 디자인 검수 3회차(소넷 1,005건 묶음) 공통 수정 ===== */
+/* 1) 입력칸 안에서 스크롤해도 '의견 담기' 버튼은 아래에 붙어 있다 */
+body.cl .demo-input > div > .go:last-of-type, body.cl .demo-input .lab-r > .go:last-of-type { position: sticky; bottom: -16px; z-index: 2; box-shadow: 0 -10px 16px -6px color-mix(in srgb, var(--card) 90%, transparent); }
+/* 2) 활동 글씨 */
+body.cl .demo-input :is(.f-label, .opt, .q, .sc, .bin, .sort-item p, .rate-row p) { font-size: max(1.1rem, 1em); }
+/* 3) 활동 화면엔 구석 캐릭터를 안 띄운다(입력칸을 가림) */
+body.cl .slide.layout-activity .sl-char { display: none; } body.cl .slide.layout-activity.has-char { padding-right: clamp(24px, calc(5 * var(--vw)), 90px); }
+/* 6) 빈 결과 안내는 작게 */
+body.cl .result-empty { padding: 18px 20px; gap: 4px; } body.cl .result-empty b { font-size: 1.1em; }
+/* 7) 아이콘은 개수만큼 한 줄(3+2 비대칭 X) */
+body.cl .b-icons { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); }
+body.cl .cl-top { justify-content: space-between; } body.cl .cl-sub { font-weight: 700; color: var(--muted); font-size: .95rem; }
+/* 깜빡임 방지 — 배경이 같으면 전환 애니메이션도 안 건다, 그대로 있는 캐릭터는 다시 튀어나오지 않는다 */
+.slide.same-bg > .sl-bgwrap { animation: none !important; }
+.slide .sl-char.stay { animation: bob 3.2s ease-in-out infinite; }
+/* 단어 고르기 블록 */
+.b-words { margin: 12px 0; } .w-line { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.b-words .w { font-size: 1.15em; font-weight: 700; padding: 8px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); transition: all .3s; }
+.b-words .w.on { background: var(--pri); color: var(--pri-ink); border-color: var(--pri); transform: translateY(-2px); }
+.b-words.diet .w:not(.on) { opacity: .12; transform: scale(.85); text-decoration: line-through; }
+.b-words .w-diet { font-size: .9em; padding: 8px 18px; }
+/* 정지 그림(영상 대신)도 천천히 움직이게 — 카메라 이동 */
+body.cl .slide .sl-media .media, body.cl .slide .blocks .media:not(.is-icon) { overflow: hidden; }
+body.cl .slide .sl-media .media img, body.cl .slide .blocks .media:not(.is-icon) img { animation: kbm 16s ease-in-out infinite alternate; will-change: transform; }
+@keyframes kbm { from { transform: scale(1.0) translate3d(0, 0, 0); } to { transform: scale(1.08) translate3d(-1.5%, -1%, 0); } }
+/* 칸 넘침 방지 — 좁은 칸에서도 글이 상자 밖으로 안 나가게 */
+body.cl .slide :is(td, th, .fl-front, .fl-back, .wcard, .opt, .b-cover, .card-s, .bin, .sc, .b-bubble, .b-concept, .cs, .node, .lab-card, .sort-item, .rate-row, .tag) { overflow-wrap: anywhere; word-break: keep-all; min-width: 0; }
+body.cl .slide .b-table table { table-layout: fixed; }
+body.cl .fl-card, body.cl .fl-in { height: auto; } body.cl .fl-front, body.cl .fl-back { position: absolute; overflow: auto; }
+
+/* ===== 선택형 활동(손들기 집계) ===== */
+body.cl .vote { display: grid; gap: 22px; align-items: start; } body.cl .vote.with-media { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+body.cl .vote-qs { display: grid; gap: 16px; } body.cl .vote.multi .vote-qs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.cl .vq { background: color-mix(in srgb, var(--card) 90%, transparent); border: var(--bw) solid var(--line); border-radius: var(--r); padding: 16px 18px; backdrop-filter: blur(8px); }
+body.cl .vq-q { font-weight: 800; font-size: 1.15em; margin: 0 0 12px; line-height: 1.4; }
+body.cl .vote.multi .vq-q { font-size: 1em; }
+body.cl .vq-opts { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+body.cl .vo { position: relative; border-radius: calc(var(--r) * .6); overflow: hidden; background: var(--bg2); border: 2px solid var(--line); }
+body.cl .vo.top { border-color: var(--pri); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pri) 30%, transparent); }
+body.cl .vo-btn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 14px 16px; border: 0; background: none; text-align: left; font-size: 1.05em; font-weight: 700; cursor: pointer; }
+body.cl .vo-btn:active { transform: scale(.98); }
+body.cl .vo-t { flex: 1; overflow-wrap: anywhere; } body.cl .vo-n { min-width: 1.8em; text-align: center; font-size: 1.4em; color: var(--pri); font-variant-numeric: tabular-nums; }
+body.cl .vo-bar { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--pri) 16%, transparent); transition: width .5s cubic-bezier(.2, .8, .2, 1); z-index: 0; }
+body.cl .vo-minus { position: absolute; z-index: 2; right: 4px; top: 4px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--card); color: var(--muted); font-weight: 900; line-height: 1; cursor: pointer; opacity: .6; }
+body.cl .vo-minus:hover { opacity: 1; }
+body[data-tone="mid"].cl .vo { border: 2.5px solid #141414; box-shadow: 3px 3px 0 #141414; }
+body.cl .cl-bar a.ghost { text-decoration: none; display: inline-flex; align-items: center; } body.cl .cl-bar .sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
+body.cl .vote.multi .vq-opts { grid-template-columns: 1fr; gap: 8px; }
+body.cl .vote.multi .vo-btn { padding: 10px 14px; }
+body.cl .vq-opts:has(> .vo:nth-child(5)) { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+body.cl .vo-minus { top: 50%; transform: translateY(-50%); right: 3.2em; }
+body.cl .vq.talk .vq-q { font-size: 1.45em; line-height: 1.4; } body.cl .vq-talk { color: var(--muted); margin: -4px 0 12px; font-size: .95em; }
+body.cl .vq.talk .vq-opts { grid-template-columns: repeat(6, minmax(0, 1fr)); } body.cl .vq.talk .vo-btn { justify-content: center; text-align: center; flex-direction: column; gap: 2px; }
+body.cl .vq.talk .vo-bar { display: none; } body.cl .vq.talk .vo-minus { display: none; }
+
+/* ===== PPT 고정 화면 (2026-10-07) =====
+   수업 화면은 1920×1080 한 장으로 그리고 화면 크기에 맞춰 통째로 확대·축소한다(남는 곳은 검은 띠).
+   어떤 TV·노트북이든 배치가 똑같고, 슬라이드 안 스크롤은 없다. vw·vh 는 --vw·--vh 로 바꿔 두어 수업 화면에선 1920×1080 기준으로 계산된다 */
+:root { --vw: 1vw; --vh: 1vh; }
+html:has(body.cl) { --vw: 19.2px; --vh: 10.8px; background: #000; }
+body.cl { width: 100vw; height: 100vh; min-height: 0; overflow: hidden; background: #000; }
+body.cl #app { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--k, 1)); background: var(--bgimg, var(--bg)); overflow: hidden; }
+body.cl .slide, body.cl .slide.layout-activity .demo-input { overflow: hidden; }
+/* 위 막대 — 차시명 한 줄 + 지금 단계 칩, 세로 가운데 */
+body.cl .cl-top { min-height: 64px; padding: 0 32px; gap: 16px; }
+body.cl .cl-tt { flex-direction: row; align-items: baseline; gap: 14px; max-width: none; }
+body.cl .cl-tt small { font-size: .8rem; } body.cl .cl-tt b { font-size: 1.05rem; }
+body.cl .cl-sub { display: none; }
+/* 표 — 칸 폭은 글 길이대로(fixed 는 칸을 똑같이 나눠 '보라/색'처럼 단어가 끊겼다), 표는 글 칸 너비를 꽉 채운다 */
+body.cl .slide .b-table { align-self: stretch; width: 100%; overflow: visible; }
+body.cl .slide .b-table table { table-layout: auto; width: 100%; }
+body.cl .slide :is(td, th, .vo-t, .opt, button, .tag) { overflow-wrap: normal; word-break: keep-all; }
+/* 선택형 — 화면 가운데, 보기 칸은 크게 */
+body.cl .slide.layout-activity { display: flex; flex-direction: column; }
+/* 제목은 위에 고정, 본문은 남는 높이의 가운데 */
+body.cl .slide > .sl-fit, body.cl .slide.layout-activity > .sl-fit { flex: 1; margin: 0; width: 100%; display: flex; flex-direction: column; }
+body.cl .sl-fit > :is(.sl-main, .vote, .sl-title, .result-board, .result-empty) { margin-block: auto; }
+body.cl .vote { align-items: center; }
+body.cl .vq-opts { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+body.cl .vote:not(.multi) .vq:not(.talk) .vo-btn { min-height: 96px; }
+/* 위·아래 막대 글자 — 고정 화면 기준 */
+body.cl .cl-tt small { font-size: 1rem; } body.cl .cl-tt b { font-size: 1.2rem; }
+body.cl .cl-bar { font-size: 1rem; padding: 10px 24px; }
+/* 비교형 2칸 — 표가 하나뿐이면 두 칸을 다 쓴다(왼쪽 칸에만 끼어 반쪽이 됐다) */
+body.cl .layout-compare .blocks:not(:has(> .b-table ~ .b-table)) > .b-table { grid-column: 1 / -1; }
+/* 선택형 보기 — 글이 긴 보기는 한 줄에 하나(두 개)씩, 그림 칸은 좁게 */
+body.cl .vote.with-media { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+body.cl .vq.long .vq-opts { grid-template-columns: 1fr; }
+body.cl .vq.long:has(.vo:nth-child(5)) .vq-opts { grid-template-columns: 1fr 1fr; }
+body.cl .vq.long .vo-btn { min-height: 0; }
+body.cl .sl-fit > :is(.sl-chip, .sl-h) { align-self: flex-start; flex: none; }
+/* 뒤집기 카드 — 앞·뒷면을 같은 칸에 겹쳐 놓아 높이가 긴 쪽에 맞춰진다(뒷면이 길면 잘렸다) */
+body.cl .fl-in { display: grid; } body.cl .fl-front, body.cl .fl-back { position: relative; inset: auto; grid-area: 1 / 1; overflow: visible; }
+/* 표가 넓으면(3칸 이상) 비교형도 한 칸으로, 4칸 이상이면 옆 그림을 빼고 표에 폭을 준다 */
+body.cl .layout-compare .blocks:has(table :is(th, td):nth-child(3)) { grid-template-columns: 1fr; }
+body.cl .sl-main.has-media:has(table :is(th, td):nth-child(4)) { grid-template-columns: 1fr; }
+body.cl .sl-main.has-media:has(table :is(th, td):nth-child(4)) > .sl-media { display: none; }
+/* 표지 장 — 단계 칩은 빼고(제목이 곧 시작), 제목 묶음은 남는 높이 가운데(min-height 100% 가 칩 높이만큼 넘쳤다) */
+body.cl .slide.layout-title .sl-fit > .sl-chip { display: none; }
+body.cl .sl-fit > .sl-title { min-height: 0; }
+/* 선택형 여러 질문 — 질문 3개면 3칸, 보기가 짧으면(◎○△·감정 낱말) 가로로 늘어놓는다 */
+body.cl .vote.multi:has(.vq:nth-child(3)):not(:has(.vq:nth-child(4))) .vote-qs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.cl .vote.multi .vq:not(.long) .vq-opts { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+body.cl .vq:not(.long) .vq-opts:has(> .vo:nth-child(5)) { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+/* 빈 글 칸(내용 블록이 다 빠진 패널)은 그리지 않는다 */
+body.cl .slide .sl-text:not(:has(.blocks > :not(.b-none))) { display: none; }
+/* 선택형 표(같은 보기를 쓰는 여러 질문) */
+body.cl .vmx { width: 100%; border-collapse: separate; border-spacing: 6px; font-size: .9em; }
+body.cl .vmx th { font-weight: 800; text-align: center; padding: 6px 10px; color: var(--muted); }
+body.cl .vmx tbody th { text-align: left; color: var(--ink); background: color-mix(in srgb, var(--card) 90%, transparent); border-radius: calc(var(--r) * .5); padding: 10px 16px; }
+body.cl .vmx td { position: relative; padding: 0; }
+body.cl .vmx-b { width: 100%; min-height: 2.4em; border: 2px solid var(--line); border-radius: calc(var(--r) * .5); background: color-mix(in srgb, var(--card) 92%, transparent); font-size: 1.3em; font-weight: 900; color: var(--pri); cursor: pointer; font-variant-numeric: tabular-nums; }
+body.cl .vmx td.top .vmx-b { background: var(--pri); color: var(--pri-ink); border-color: var(--pri); }
+body.cl .vmx .vo-minus { top: 50%; transform: translateY(-50%); right: 6px; }
+/* 세 질문 나란히일 땐 보기를 세로 한 줄로(좁은 칸에 가로로 끼우면 낱말이 쪼개졌다) */
+body.cl .vote.multi:has(.vq:nth-child(3)) .vq .vq-opts { grid-template-columns: 1fr; }
+/* 도장·표지 그림 크기 한도 */
+body.cl .b-stamp { justify-self: start; align-self: start; width: fit-content; max-width: 9em; }
+body.cl .slide.layout-title .blocks .media img { max-height: 380px; width: auto; }
+body.cl .vmx2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+body.cl .vmx thead th { color: var(--ink); font-size: .95em; }
+body.cl .vres { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); background: none !important; border: 0 !important; padding: 0 !important; }
+body.cl .vres .vo-btn { cursor: default; }
+body.cl .vq:not(.long) .vq-opts:has(> .vo:nth-child(5)) { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+body.cl .slide.layout-title .sl-fit :is(img, video) { max-height: 400px !important; width: auto !important; max-width: 100%; aspect-ratio: auto !important; }
+/* 표지 장에 그림이 여러 장이면 가로로 나란히(세로로 쌓여 화면 두 배가 됐다) */
+body.cl .slide.layout-title .blocks:has(> .media ~ .media) { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
+body.cl .slide.layout-title .blocks:has(> .media ~ .media) > :not(.media) { flex-basis: 100%; }
+body.cl .slide.layout-title .blocks:has(> .media ~ .media) > .media :is(img, video) { max-height: 300px !important; }
+/* 카드가 4장 이상이면 옆 그림을 빼고 카드에 폭을 준다(좁은 칸에 글이 세로로 길게 쌓였다) */
+body.cl .sl-main.has-media:has(.sl-text :is(.b-flip, .b-cards, .b-icons) > :nth-child(4)) { grid-template-columns: 1fr; }
+body.cl .sl-main.has-media:has(.sl-text :is(.b-flip, .b-cards, .b-icons) > :nth-child(4)) > .sl-media { display: none; }
+/* 질문 두 개 나란히일 때 보기는 2×2 로(4개를 한 줄에 끼우면 숫자가 글에 붙었다) */
+body.cl .vote.multi .vq:not(.long) .vq-opts { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+/* 단순 투표(질문 하나·짧은 보기 4개 이하) — 칠판에서 누르기 좋게 큰 칸, 글은 가운데 위·인원은 아래 크게 */
+body.cl .vote:not(.multi) .vq:not(.long):not(.talk):not(:has(.vo:nth-child(5))) .vo-btn { min-height: 220px; flex-direction: column; justify-content: center; align-items: center; gap: 14px; text-align: center; font-size: 1.3em; }
+body.cl .vote:not(.multi) .vq:not(.long):not(.talk):not(:has(.vo:nth-child(5))) .vo-n { font-size: 1.8em; }
+body.cl .vote:not(.multi) .vq:not(.long):not(.talk):not(:has(.vo:nth-child(5))) .vq-q { font-size: 1.3em; margin-bottom: 20px; }
+/* 카드 한 줄은 높이를 맞춘다(글 길이 따라 들쭉날쭉했다) */
+body.cl .b-flip { align-items: stretch; } body.cl .b-flip > .fl-card, body.cl .b-flip .fl-in { height: 100%; }
+/* 말풍선 화자 이름 — 줄인 화면에서도 읽히게 */
+body.cl .slide .b-bubble > b { font-size: max(1.25rem, .9em); }
+.b-list.own { list-style: none; padding-left: 0; } .b-list.own li.sub { padding-left: 1.4em; }
+/* 긴 목록(8줄 이상)은 옆 그림을 빼고 두 단으로 */
+body.cl .sl-main.has-media:has(.sl-text .b-list > li:nth-child(8)) { grid-template-columns: 1fr; }
+body.cl .sl-main.has-media:has(.sl-text .b-list > li:nth-child(8)) > .sl-media { display: none; }
+body.cl .slide .b-list:has(> li:nth-child(8)) { columns: 2; column-gap: 48px; } body.cl .slide .b-list > li { break-inside: avoid; }
+body.cl .layout-compare .blocks > .b-list:has(> li:nth-child(8)) { grid-column: 1 / -1; }
+/* 하나 빼기(−)는 칸 오른쪽 위 모서리에 작게 — 숫자 위에 겹쳐 숫자를 누르면 빼기가 눌렸다 */
+body.cl .vo-minus, body.cl .vote.multi .vo-minus { top: 6px; right: 6px; transform: none; width: 30px; height: 30px; }
+body.cl .vo-btn { padding-right: 44px; }
+body.cl .vmx .vo-minus { top: 4px; right: 4px; transform: none; width: 26px; height: 26px; }
+/* 큰 칸 투표의 인원 막대는 칸 아래 얇은 줄로(칸 반쪽을 칠하면 칸이 갈라져 보였다) */
+body.cl .vote:not(.multi) .vq:not(.long):not(.talk):not(:has(.vo:nth-child(5))) .vo-bar { top: auto; bottom: 0; height: 10px; border-radius: 0 6px 6px 0; }
+/* ===== 수업 화면 밖(표지·포털·차시 홈) 화면 크기 맞춤 (2026-10-07) ===== */
+/* 큰 모니터·TV — 1180 폭 그대로면 가운데에 작게 몰렸다. 화면 폭 단계별로 통째 확대 */
+@media (min-width: 1600px) { body:not(.cl) { zoom: 1.25; } }
+@media (min-width: 1900px) { body:not(.cl) { zoom: 1.4; } }
+@media (min-width: 2500px) { body:not(.cl) { zoom: 1.8; } }
+/* 폰 — 위 메뉴가 오른쪽 끝에서 잘렸다, 섬 목록은 두 줄 */
+@media (max-width: 520px) {
+  .site-nav .sn-in { gap: 8px; width: calc(100% - 20px); } .sn-brand { font-size: 15px; gap: 6px; }
+  .site-nav nav { gap: 2px; } .site-nav nav a { padding: 6px 10px; }
+  .p-e { grid-template-columns: 1fr 1fr; gap: 26px 12px; }
+}
+/* 작은 글씨 하한 */
+.site-foot, .site-foot p { font-size: 14px; } .sn-brand i { font-size: 13px; }
+body:not(.cl) :is(small, .tag, .kicker, .badge) { font-size: max(13px, .85em); } .sn-brand i { font-size: 13px; }
+/* ===== 글 읽기 정리 (2026-10-08) =====
+   PPT 원문을 옮기며 요소마다 1.2~1.6 으로 제각각이던 줄간격, 줄간격보다 좁던 문단·항목 사이(10px·4px), 화면 폭을 다 써서 60자를 넘던 줄을
+   수업 화면 기준 한 벌로 맞춘다. 줄간격 본문 1.5 · 카드·보기·표 1.4 · 제목 1.25 / 블록 사이 .7em · 목록 항목 사이 .4em / 글 칸 한 줄 40자 안팎 */
+/* 자간 — 큰 제목은 기본 자간이면 글자 사이가 떠 보인다(학교급 장식 글꼴·고등 명조는 테마 값 그대로).
+   본문은 0 그대로: 자간을 조금이라도 주면 Chrome 이 text-wrap: pretty 를 건너뛰어 마지막 줄에 한 낱말만 남았다 */
+body.cl .slide :is(.sl-h, .b-text.big, .vq-q) { letter-spacing: -.025em; }
+/* 줄간격 */
+body.cl .slide :is(.b-text, .b-list li, .b-concept p, .b-bubble > span, .sl-intro, .cv-text, .vq-talk, dd) { line-height: 1.5; }
+body.cl .slide .b-text.big { line-height: 1.35; }
+body.cl .slide :is(.vo-t, .fl-front, .fl-back, figcaption, td, th, .b-concept em) { line-height: 1.4; }
+/* 블록 사이 — 문단·말풍선·개념 상자가 붙어 한 덩어리로 보였다. 세로로 쌓고 간격은 gap 하나로(빈 블록은 자리를 차지하지 않게) */
+body.cl .slide .b-none { display: none; }
+body.cl .slide:not(.layout-compare) .sl-text > .blocks { display: flex; flex-direction: column; gap: .7em; }
+body.cl .slide.layout-compare .sl-text > .blocks { row-gap: .7em; }
+body.cl .slide .sl-text > .blocks > * { margin-top: 0; margin-bottom: 0; }
+body.cl .slide .b-list > li { margin: 0; } body.cl .slide .b-list > li + li { margin-top: .4em; }
+body.cl .slide .b-concept p { margin-top: .25em; }
+body.cl .slide .b-bubble > b { margin-bottom: .15em; }
+/* 글 칸 안쪽 여백 — 글자(32px)보다 좁아(24px) 글이 테두리에 붙어 보였다 */
+body.cl .slide.has-bg .sl-text { padding: .85em 1.1em; }
+body.cl .slide.has-bg .sl-intro { padding: .45em .9em; }
+/* 줄 길이 — 글만 있는 칸이 화면 폭을 다 쓰면 한 줄이 60자를 넘어 다음 줄 첫머리를 놓쳤다. 표·카드·그림이 든 칸과 비교형은 넓게 둔다.
+   넘치면 v2.js fitSlide 가 .wide 를 붙여 폭 제한을 먼저 풀고, 그래도 넘칠 때만 글자를 줄인다 */
+body.cl .slide:not(.layout-compare) .sl-fit:not(.wide) .sl-main:not(.has-media) > .sl-text:not(:has(.b-table, .b-flip, .b-icons, .media, .b-words, .result-board)) { max-width: 40em; }
+body.cl .slide .sl-fit:not(.wide) .sl-intro { max-width: 38em; }
+body.cl .slide .sl-fit:not(.wide) .vq-q { max-width: 36em; }
+/* 줄 바꿈 모양 — 짧은 글(보기·카드·캡션·표 머리)은 줄 길이를 고르게, 문단은 마지막 줄에 한 낱말만 남지 않게 */
+body.cl .slide :is(.vo-t, .fl-front, .fl-back, figcaption, th, td, .vq-q, .b-concept em, .cv-hint, .b-stamp span) { text-wrap: balance; }
+body.cl .slide :is(.b-text:not(.big), li, .b-concept p, .b-bubble > span, .cv-text, .sl-intro, dd) { text-wrap: pretty; }
+/* 원문 줄바꿈(\n)이 있는 캡션·안내·보기도 줄을 지킨다(한 줄로 이어 붙었다) */
+body.cl .slide :is(figcaption, .sl-intro, .vq-q, .vo-t, .cv-hint) { white-space: pre-line; }
+/* 좁은 칸의 긴 영어 낱말(Accountability 등) — 그 칸만 글자를 줄인다(v2.js tidyText 가 .lw 를 붙임) */
+body.cl .slide .lw { font-size: .82em; }
+/* 긴 발문 — 크고 굵은 글씨 그대로면 여섯 줄 넘게 빽빽했다(v2.js tidyText 가 .lq 를 붙임) */
+body.cl .vq.talk .vq-q.lq, body.cl .vote.multi .vq-q.lq, body.cl .vq.long .vq-q.lq { font-size: 1.1em; line-height: 1.55; font-weight: 700; }
+body.cl .slide .b-text.big.lq { font-size: 1.2em; line-height: 1.45; }
+/* 세로 자리 — 남는 높이의 정가운데에 두면 내용이 적은 장은 제목과 본문 사이가 300px 가까이 떠 따로 노는 것처럼 보였다.
+   남는 높이를 위 1 : 아래 2 로 나눠 본문을 제목 쪽으로 붙인다(표지 장은 가운데 그대로). 넘치는 장은 빈칸이 0 이 되어 전과 같다 */
+body.cl .sl-fit::before, body.cl .sl-fit::after { content: ''; flex: 1 1 0; }
+body.cl .sl-fit::before { order: 1; } body.cl .sl-fit::after { order: 3; flex-grow: 2; }
+body.cl .sl-fit > :is(.sl-intro, .sl-main, .vote, .sl-title, .result-board, .result-empty) { order: 2; margin-top: 0; margin-bottom: 0; }
+body.cl .slide.layout-title .sl-fit::after { flex-grow: 1; }
+body.cl .sl-fit > .sl-intro { margin-bottom: .7em; }

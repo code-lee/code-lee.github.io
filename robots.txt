@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /$
+Disallow: /index.html
+Disallow: /e/
+Disallow: /m/
+Disallow: /h/
+Disallow: /v2/
+Disallow: /media/
+Disallow: /api/
+Disallow: /lessons_v2/
