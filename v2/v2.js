@@ -7,13 +7,19 @@ const LVN = { elem: '초등', mid: '중등', high: '고등' };
 const PATH = location.pathname.slice(0).match(/^\/([emh])(?:\/(\d+)(?:\/(\w+))?)?/) || [];
 const LID = PATH[2] ? `${LVK[PATH[1]]}-${PATH[2]}` : null;
 let DLS = null;
+// 수정 기능 — server.py 로 띄웠을 때만 있다(정적 배포본에는 /api/edit/status 가 없어 null). 경로 규칙은 server.py EDIT_PATH 와 같다
+let EDIT = null;
+const editStatus = () => fetch('/api/edit/status').then(r => r.ok ? r.json() : null).catch(() => null);
+const getp = (o, path) => path.split('.').reduce((x, k) => x == null ? undefined : x[Array.isArray(x) ? +k : k], o);
+const setp = (o, path, v) => { const ks = path.split('.'), last = ks.pop(), t = ks.reduce((x, k) => x[Array.isArray(x) ? +k : k], o); t[Array.isArray(t) ? +last : last] = v; };
 const dlUrl = file => DLS ? DLS.base + file.split('/').map(encodeURIComponent).join('/') : null;
 const jget = (k, d) => { try { return JSON.parse(ls.get(k)) ?? d; } catch (e) { return d; } };
 const jset = (k, v) => ls.set(k, JSON.stringify(v));
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-async function loadV2(id) {
+async function loadV2(id, all = false) {
   L = await getJSON(`/lessons_v2/${id}.json`);
+  if (!all) L.slides = L.slides.filter(x => !x.hidden);  // 수정에서 숨긴 장 — 수정 모드에서만 보인다
   L.steps = Object.entries(L.activities).map(([k, a]) => ({ ...a, id: k }));  // review·answerText 가 L.steps 를 찾는다
   MEDIA = Object.fromEntries((L.media || []).map(m => [m.id, m]));
   FILES = new Set(await getJSON(`/api/media/${id}.json`).catch(() => []));
@@ -43,7 +49,7 @@ function block(b, key, redraw) {
       return wrap;
     }
     case 'cover': {
-      const open = !!OPEN[key];
+      const open = !!OPEN[key] || document.body.classList.contains('editing');  // 수정 모드는 가림막 안 글도 미리 보이게 열어 둔다
       const el = h('button', { class: 'b-cover' + (open ? ' open' : ''), 'data-key': key, onclick: () => {
           OPEN[key] = !OPEN[key]; if (OPEN[key]) SFX.reveal();
           const nu = tidyText(block(b, key, redraw)); nu.className = el.className.replace(/\bopen\b/, '').trim() + (OPEN[key] ? ' open' : ''); el.replaceWith(nu);  // 그 자리에서만 바꾼다
@@ -190,17 +196,62 @@ function voteQs(a) {
   return [{ q: a.q || a.card_title || fq.join(' / ') || a.title || '', options: Array.from({ length: a.groups || 6 }, (_, i) => `${i + 1}모둠 발표`), talk: true }];
 }
 
+// 수정 패널이 다루는 글 칸 — [경로, 이름]
+function slideFields(sl) {
+  const F = sl.layout === 'title' ? [] : [['title', '제목']];
+  if (sl.layout === 'activity' || sl.intro) F.push(['intro', '안내 문장']);
+  const T = { text: '글', lettering: '레터링', stamp: '도장', words: '단어 고르기 문장', cover: '가림막 안 글', concept: '개념 설명', bubble: '말풍선 글' };
+  (sl.blocks || []).forEach((b, i) => {
+    const n = `블록 ${i + 1}`, p = `blocks.${i}`;
+    if (b.type === 'concept') F.push([`${p}.term`, `${n} · 개념 이름`]);
+    if (b.type === 'bubble') F.push([`${p}.who`, `${n} · 말한 사람`]);
+    if (typeof b.text === 'string') F.push([`${p}.text`, `${n} · ${T[b.type] || '글'}`]);
+    if (typeof b.hint === 'string') F.push([`${p}.hint`, `${n} · ${b.type === 'link' ? '버튼 글' : '가림막 버튼 글'}`]);
+    if (b.type === 'list') b.items.forEach((x, j) => F.push([`${p}.items.${j}`, `${n} · 목록 ${j + 1}`]));
+    if (b.type === 'flip') b.items.forEach((x, j) => F.push([`${p}.items.${j}.front`, `${n} · 카드 ${j + 1} 앞`], [`${p}.items.${j}.back`, `${n} · 카드 ${j + 1} 뒤`]));
+    if (b.type === 'gallery' || b.type === 'icons') b.items.forEach((x, j) => typeof x.text === 'string' && F.push([`${p}.items.${j}.text`, `${n} · 그림 ${j + 1} 글`]));
+    if (b.type === 'table') {
+      (b.head || []).forEach((x, j) => F.push([`${p}.head.${j}`, `${n} · 표 머리 ${j + 1}`]));
+      b.rows.forEach((r, ri) => Array.isArray(r) ? r.forEach((x, ci) => F.push([`${p}.rows.${ri}.${ci}`, `${n} · 표 ${ri + 1}행 ${ci + 1}칸`])) : F.push([`${p}.rows.${ri}`, `${n} · 표 ${ri + 1}행`]));
+    }
+  });
+  return F;
+}
+function activityFields(a) {
+  const F = typeof a.q === 'string' ? [['q', '질문']] : [];
+  (a.options || []).forEach((x, j) => typeof x === 'string' && F.push([`options.${j}`, `보기 ${j + 1}`]));
+  (a.items || []).forEach((x, j) => typeof x === 'string' ? F.push([`items.${j}`, `항목 ${j + 1}`]) : typeof x?.text === 'string' && F.push([`items.${j}.text`, `항목 ${j + 1}`]));
+  (a.scale || []).forEach((x, j) => typeof x === 'string' && F.push([`scale.${j}`, `척도 ${j + 1}`]));
+  (a.vote || []).forEach((v, k) => { F.push([`vote.${k}.q`, `질문 ${k + 1}`]); (v.options || []).forEach((x, j) => F.push([`vote.${k}.options.${j}`, `질문 ${k + 1} · 보기 ${j + 1}`])); });
+  return F;
+}
+function lessonFields(d) {
+  const F = [['title', '차시 제목'], ['area', '영역'], ['grade', '학년']];
+  (d.goal || []).forEach((g, i) => F.push([`goal.${i}`, `학습 목표 ${i + 1} (차시 목록·추천 배너용 — 지도안 표의 학습 목표는 아래 '지도안 · 학습 목표')`]));
+  (d.plan?.info || []).forEach((r, i) => typeof r[0] === 'string' ? F.push([`plan.info.${i}.1`, `지도안 · ${r[0]}`]) : r.forEach((c, j) => F.push([`plan.info.${i}.${j}.1`, `지도안 · ${c[0]}`])));
+  (d.plan?.steps || []).forEach((st, i) => F.push([`plan.steps.${i}.activity`, `지도안 · ${st.step} · 교수·학습 활동`], [`plan.steps.${i}.materials`, `지도안 · ${st.step} · 자료·유의점`]));
+  return F.filter(([p]) => typeof getp(d, p) === 'string' || ['title', 'area', 'grade'].includes(p));
+}
+const autosize = ta => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 320) + 'px'; };
+
 /* ======================= 수업 모드(교사 칠판) /e/3/class =======================
    학생 기기 동시 접속 없음(2026-10-06 대표님 결정) — 활동은 교사가 칠판에서 반 의견을 받아 직접 조작한다.
    낸 의견은 이 기기에만 쌓이고(모둠별로 여러 번 내도 됨) [결과 정리]로 모아 본다. */
 async function classMain() {
-  await loadV2(LID);
-  // PPT 고정 화면 — 1920×1080 한 장을 창 크기에 맞춰 통째로 줄이고 키운다(v2.css 'PPT 고정 화면')
-  const scale = () => document.body.style.setProperty('--k', Math.min(innerWidth / 1920, innerHeight / 1080));
+  EDIT = await editStatus();
+  const QS = new URLSearchParams(location.search), editing = !!EDIT && QS.has('edit');  // ?edit=1 = 수정 모드(server.py 에서만)
+  await loadV2(LID, editing);
+  if (editing) document.body.classList.add('editing');
+  // PPT 고정 화면 — 1920×1080 한 장을 창 크기에 맞춰 통째로 줄이고 키운다(v2.css 'PPT 고정 화면'). 수정 모드는 오른쪽 패널 폭을 뺀다
+  const PANEL = 460;
+  const scale = () => document.body.style.setProperty('--k', Math.min((innerWidth - (editing ? PANEL : 0)) / 1920, innerHeight / 1080));
   scale(); addEventListener('resize', scale);
   const root = $('#app'), KEY = 'eth2_' + LID;
   const S = jget(KEY, {}), save = () => jset(KEY, S);
   S.idx = Math.min(S.idx || 0, L.slides.length - 1); S.build ??= 0; S.start ??= Date.now();
+  const want = QS.get('s');  // ?s=<슬라이드 id> — 그 장부터(차시 홈 '수정 사항'의 링크, 수정 모드 오갈 때 자리 유지)
+  if (want) { const i = L.slides.findIndex(x => x.id === want); if (i >= 0) { S.idx = i; S.build = 99; } }
+  if (editing) S.build = 99;  // 수정 모드는 블록을 다 펼쳐 보인다
   let notes = ls.get('eth2_notes') === '1';
   const ANS = jget(KEY + '_ans', {}), REV = {};
   const VOTES = jget(KEY + '_votes', {});  // 선택형 집계 {활동: {질문: {보기: 인원}}}      // 활동별 담은 의견 {활동: [값…]}
@@ -214,7 +265,7 @@ async function classMain() {
       if (AUDIO) playTTS();  // 읽던 것은 멈춘다
       actOf(L.slides[i]) ? SFX.start() : SFX.next();
     }
-    S.idx = i; S.build = build; save(); render();
+    S.idx = i; S.build = editing ? 99 : build; save(); render();
   };
   const next = () => {
     const sl = L.slides[S.idx];
@@ -262,8 +313,8 @@ async function classMain() {
       h('span', { class: 'cl-sub' }, sl.sub || ''));
     const deco = slideDeco(sl);
     const lettered = (sl.blocks || []).some(b => b.type === 'lettering');  // 레터링이 있으면 같은 제목을 또 쓰지 않는다
-    const stage = h('section', { class: `slide layout-${sl.layout}` + (deco.some(x => x.classList.contains('sl-bgwrap')) ? ' has-bg' : '') + (deco.some(x => x.classList.contains('sl-char')) ? ' has-char' : ''), 'data-phase': sl.phase,
-      onclick: e => { if (!act && !e.target.closest('button, a, input, textarea, select, video[controls]')) next(); } },  // 빈 곳 클릭 = 다음
+    const stage = h('section', { class: `slide layout-${sl.layout}` + (deco.some(x => x.classList.contains('sl-bgwrap')) ? ' has-bg' : '') + (deco.some(x => x.classList.contains('sl-char')) ? ' has-char' : '') + (sl.hidden ? ' is-hidden' : ''), 'data-phase': sl.phase,
+      onclick: e => { if (!editing && !act && !e.target.closest('button, a, input, textarea, select, video[controls]')) next(); } },  // 빈 곳 클릭 = 다음(수정 모드 제외)
       ...deco,
       sl.sub || sl.phase ? h('span', { class: 'sl-chip' }, sl.sub || sl.phase) : null,
       sl.layout !== 'title' && sl.title && !lettered ? h('h2', { class: 'sl-h' }, sl.title) : null);
@@ -316,10 +367,11 @@ async function classMain() {
       h('button', { class: 'go', onclick: next, disabled: S.idx === L.slides.length - 1 && S.build >= buildCount(sl) }, '▶'),
       h('span', { class: 'cl-count' }, `${S.idx + 1} / ${L.slides.length}`),
       actCtl,
-      h('select', { class: 'jump', onchange: e => go(+e.target.value, 99) }, L.slides.map((x, k) => h('option', { value: k, selected: k === S.idx }, `${k + 1}. ${x.title || x.sub || ''}`))),
+      h('select', { class: 'jump', onchange: e => go(+e.target.value, 99) }, L.slides.map((x, k) => h('option', { value: k, selected: k === S.idx }, `${editing ? edMark(x) : ''}${k + 1}. ${x.title || x.sub || ''}`))),
       h('span', { class: 'sp' }),
       h('button', { class: 'ghost' + (BGM ? ' on' : ''), onclick: e => toggleBGM(e.currentTarget) }, '배경음'),
       h('button', { class: 'ghost', onclick: () => { if (confirm('처음 슬라이드로 돌아갈까요? 세어 둔 인원도 지워집니다.')) { for (const k in VOTES) delete VOTES[k]; jset(KEY + '_votes', VOTES); for (const k in OPEN) delete OPEN[k]; go(0); } } }, '처음으로'),
+      EDIT ? h('a', { class: 'ghost ed-toggle' + (editing ? ' on' : ''), href: `?${editing ? '' : 'edit=1&'}s=${encodeURIComponent(sl.id)}`, title: editing ? '수정을 끝내고 수업 화면으로' : '이 장을 고치기(이 컴퓨터의 수정 파일에 저장)' }, editing ? '수정 끝' : '수정') : null,
       h('button', { class: 'ghost', onclick: () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}) }, '전체 화면'));
     // 같은 활동 장에서 보기를 누른 것 — 보기 칸과 아래 막대만 바꾼다(장 전체를 다시 그려 그림·배경이 깜빡였다)
     const oldStage = document.querySelector('.slide');
@@ -349,7 +401,82 @@ async function classMain() {
       .filter(a => a.effect?.getComputedTiming().iterations !== Infinity).map(a => a.finished)).then(fit, () => {}));
     // 가림막·카드를 열면 내용이 길어진다 — 크기가 바뀔 때마다 다시 맞춘다(열고 나서 아래가 잘렸다)
     new ResizeObserver(() => fit()).observe(fitBox.querySelector('.sl-main, .vote, .sl-title') || fitBox);
+    if (editing) edShow(sl);
   }
+
+  // ───── 수정 패널(?edit=1) — 이 장의 글 칸을 고치면 바로 미리 보이고, [저장]하면 lessons_v2/edits/<차시>.json 에 쌓인다 ─────
+  const ED = { ov: {}, conflicts: [], sid: null, inputs: [], t: 0 };
+  const edBy = () => ls.get('eth2_edit_by') || '', edTok = () => ls.get('eth2_edit_token') || '';
+  const edBucket = (scope, id) => scope === 'lesson' ? (ED.ov.lesson || {}) : ((ED.ov[scope === 'slide' ? 'slides' : 'activities'] || {})[id] || {});
+  function edMark(x) { const b = (ED.ov.slides || {})[x.id] || {}; return (b.hidden ? '[숨김] ' : '') + (b.fields || b.note ? '✎ ' : ''); }
+  async function edLoad() { const r = await getJSON(`/api/edits/${LID}`).catch(() => ({})); ED.ov = r.overlay || {}; ED.conflicts = r.conflicts || []; }
+  const edStatus = (t, bad) => { const el = $('.ed-st'); if (el) { el.textContent = t; el.classList.toggle('bad', !!bad); } };
+  const edPreview = () => { clearTimeout(ED.t); ED.t = setTimeout(render, 250); };
+  function edField(scope, id, obj, path, label) {
+    const e = (edBucket(scope, id).fields || {})[path], cur = getp(obj, path) ?? '';
+    const ta = h('textarea', { class: 'ed-in', rows: 1, 'data-scope': scope, 'data-id': id || '', 'data-path': path });
+    ta.value = cur; ta._init = cur; ta._orig = e ? e.orig : cur;
+    ta.addEventListener('input', () => { setp(obj, path, ta.value); autosize(ta); ta.closest('.ed-row').classList.toggle('dirty', ta.value !== ta._init); edStatus('저장 안 함'); if (scope !== 'lesson') edPreview(); });
+    ED.inputs.push(ta);
+    return h('label', { class: 'ed-row' + (e ? ' edited' : '') }, h('span', { class: 'ed-lb' }, label, e ? h('small', {}, ` · 수정됨 ${e.by ? '(' + e.by + ') ' : ''}${(e.at || '').slice(5, 16)}`) : null), ta,
+      e ? h('small', { class: 'ed-orig' }, '원래 글: ' + (e.orig || '(없음)')) : null);
+  }
+  function edShow(sl) {
+    if (ED.sid === sl.id && $('.ed-panel')) return;
+    ED.sid = sl.id; ED.inputs = [];
+    const aid = sl.activity || sl.act, act = aid ? L.steps.find(a => a.id === aid) : null, sb = edBucket('slide', sl.id);
+    ED.note = h('textarea', { class: 'ed-in ed-note', rows: 3, placeholder: '검토 메모 — 그림 교체·순서 변경처럼 여기서 못 고치는 것을 적어 두세요' });
+    ED.note.value = sb.note || ''; ED.note.addEventListener('input', () => edStatus('저장 안 함'));
+    ED.hide = h('input', { type: 'checkbox' }); ED.hide.checked = !!sb.hidden; ED.hide.addEventListener('change', () => edStatus('저장 안 함'));
+    const conf = ED.conflicts.filter(c => c.startsWith(sl.id + ' ') || (aid && c.startsWith(aid + ' ')) || c.startsWith('차시 '));
+    const name = h('input', { placeholder: '이름(누가 고쳤는지 기록)' }); name.value = edBy(); name.addEventListener('change', () => ls.set('eth2_edit_by', name.value.trim()));
+    const tok = !EDIT.can_edit ? (EDIT.token ? (t => (t.value = edTok(), t.addEventListener('change', () => ls.set('eth2_edit_token', t.value.trim())), h('label', { class: 'ed-by' }, '수정 토큰', t)))(h('input', { type: 'password', placeholder: '관리자에게 받은 토큰' }))
+      : h('p', { class: 'ed-warn' }, '이 컴퓨터에서 띄운 서버에서만 저장할 수 있어요.')) : null;
+    const panel = h('aside', { class: 'ed-panel' },
+      h('header', {}, h('b', {}, `${S.idx + 1}번 슬라이드 수정`), h('small', {}, sl.id + (sl.hidden ? ' · 숨긴 장' : ''))),
+      conf.length ? h('p', { class: 'ed-warn' }, '확인 필요 — 기준본이 바뀌어 적용하지 못한 수정: ', conf.join(' / ')) : null,
+      h('label', { class: 'ed-by' }, '고친 사람', name), tok,
+      h('section', {}, h('h4', {}, '이 슬라이드'), slideFields(sl).map(([p, lb]) => edField('slide', sl.id, sl, p, lb))),
+      act ? h('section', {}, h('h4', {}, `활동 글(${aid}) — 이 활동을 쓰는 모든 장에 반영`), activityFields(act).map(([p, lb]) => edField('activity', aid, act, p, lb))) : null,
+      h('section', {}, h('h4', {}, '검토'), h('label', { class: 'ed-check' }, ED.hide, ' 이 장 숨기기 — 수업 화면·배포본에서 빠짐'), ED.note),
+      h('details', {}, h('summary', {}, '차시 정보 — 제목·학습 목표·지도안 표(차시 홈)'), lessonFields(L).map(([p, lb]) => edField('lesson', null, L, p, lb))),
+      h('footer', {}, h('span', { class: 'ed-st' }), h('button', { class: 'ghost', onclick: edRevert }, '이 장 원래대로'), h('button', { class: 'go', onclick: edSave }, '저장')));
+    $('.ed-panel')?.remove(); document.body.append(panel);
+    panel.querySelectorAll('textarea').forEach(autosize);
+  }
+  async function edPost(body) {
+    const r = await fetch(`/api/edits/${LID}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(edTok() ? { 'X-Edit-Token': edTok() } : {}) }, body: JSON.stringify({ ...body, by: edBy() }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || r.status);
+    return j;
+  }
+  async function edReload(msg) {
+    const sid = ED.sid;
+    await loadV2(LID, true); await edLoad();
+    S.idx = Math.max(0, L.slides.findIndex(x => x.id === sid)); ED.sid = null; render(); edStatus(msg);
+  }
+  async function edSave() {
+    const reqs = {};
+    for (const ta of ED.inputs) {
+      if (ta.value === ta._init) continue;
+      const r = reqs[ta.dataset.scope + '|' + ta.dataset.id] ||= { scope: ta.dataset.scope, id: ta.dataset.id || null, set: {}, unset: [] };
+      if (ta.value === ta._orig) r.unset.push(ta.dataset.path); else r.set[ta.dataset.path] = ta.value;
+    }
+    const sb = edBucket('slide', ED.sid);
+    if (ED.hide.checked !== !!sb.hidden || ED.note.value.trim() !== (sb.note || ''))
+      Object.assign(reqs['slide|' + ED.sid] ||= { scope: 'slide', id: ED.sid, set: {}, unset: [] }, { hidden: ED.hide.checked, note: ED.note.value });
+    if (!Object.keys(reqs).length) return edStatus('바뀐 것이 없어요');
+    try { for (const r of Object.values(reqs)) await edPost(r); } catch (e) { return edStatus('저장 못 함: ' + e.message, true); }
+    await edReload('저장했어요 ' + new Date().toTimeString().slice(0, 5));
+  }
+  async function edRevert() {
+    const sb = edBucket('slide', ED.sid);
+    if (!sb.fields && !sb.hidden && !sb.note) return edStatus('이 장에는 수정한 것이 없어요');
+    if (!confirm('이 장의 수정(글·숨김·메모)을 모두 지우고 원래대로 돌릴까요?')) return;
+    try { await edPost({ scope: 'slide', id: ED.sid, unset: Object.keys(sb.fields || {}), hidden: false, note: '' }); } catch (e) { return edStatus('되돌리지 못함: ' + e.message, true); }
+    await edReload('원래대로 돌렸어요');
+  }
+  if (editing) await edLoad();
 
   document.addEventListener('keydown', e => {
     if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -393,6 +520,7 @@ const planLines = t => String(t || '').split('\n').filter(x => x.trim()).map(x =
 });
 const fmtSize = n => n >= 1048576 ? `${(n / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`;
 async function homeMain() {
+  EDIT = await editStatus();
   await loadV2(LID);
   const done = jget('eth2_' + LID, {}), unit = { elem: '섬', mid: '화', high: '호' }[L.level];
   // 표지 그림 — 슬라이드 순서대로 처음 나오는 실제 배경·그림(루프 영상이 있으면 영상)
@@ -443,7 +571,8 @@ async function homeMain() {
         h('p', { class: 'hm-meta' }, [L.area, L.grade, `${L.minutes}분`, `슬라이드 ${L.slides.length}장`].filter(Boolean).join(' · ')),
         h('div', { class: 'row' },
           h('a', { class: 'go big', href: `/${PATH[1]}/${L.no}/class` }, done.idx ? `이어서 수업하기 · ${done.idx + 1}번 슬라이드` : '수업 시작'),
-          done.idx ? h('a', { class: 'ghost big', href: `/${PATH[1]}/${L.no}/class`, onclick: () => jset('eth2_' + LID, {}) }, '처음부터') : null))),
+          done.idx ? h('a', { class: 'ghost big', href: `/${PATH[1]}/${L.no}/class`, onclick: () => jset('eth2_' + LID, {}) }, '처음부터') : null,
+          EDIT ? h('a', { class: 'ghost big', href: `/${PATH[1]}/${L.no}/class?edit=1`, title: '슬라이드·차시 정보를 고쳐 수정 파일에 저장(이 서버에서만)' }, '수정하기') : null))),
     h('main', { class: 'home' },
       h('section', { class: 'hm-card pl-card' }, h('h3', {}, '수업 지도안'),
         h('div', { class: 'pl-wrap' }, h('table', { class: 'pl-info' },
@@ -467,6 +596,28 @@ async function homeMain() {
             ext === 'html' ? h('a', { class: 'ghost', href: url, target: '_blank', rel: 'noopener' }, '열기') : null,
             h('a', { class: 'go', href: url, download: name }, '내려받기'));
         }))) : null));
+  if (EDIT) await editsCard();
+}
+// 차시 홈 '수정 사항' — 수정 파일(lessons_v2/edits/<차시>.json)에 쌓인 것을 장별로(원래 글 → 고친 글, 숨긴 장, 메모, 확인 필요)
+async function editsCard() {
+  const [r, raw] = await Promise.all([getJSON(`/api/edits/${LID}`).catch(() => null), getJSON(`/lessons_v2/${LID}.json`).catch(() => null)]);
+  if (!r || !raw) return;
+  const ov = r.overlay || {}, cls = `/${PATH[1]}/${L.no}/class`, items = [];
+  const diff = F => Object.entries(F || {}).map(([p, e]) => h('div', { class: 'ed-diff' }, h('small', {}, p), h('del', {}, e.orig || '(없음)'), h('ins', {}, e.value),
+    h('small', {}, [e.by, (e.at || '').slice(5, 16)].filter(Boolean).join(' · '))));
+  for (const [sid, v] of Object.entries(ov.slides || {})) {
+    const i = raw.slides.findIndex(x => x.id === sid), x = raw.slides[i];
+    items.push(h('li', {}, h('a', { href: `${cls}?edit=1&s=${encodeURIComponent(sid)}` }, `${i + 1}번 · ${x?.title || x?.sub || sid}`),
+      v.hidden ? h('span', { class: 'ed-tag' }, '숨김') : null, v.note ? h('p', { class: 'ed-note-v' }, '메모: ' + v.note) : null, diff(v.fields)));
+  }
+  for (const [aid, v] of Object.entries(ov.activities || {})) {
+    const x = raw.slides.find(s => s.activity === aid || s.act === aid);
+    items.push(h('li', {}, h('a', { href: `${cls}?edit=1${x ? '&s=' + encodeURIComponent(x.id) : ''}` }, `활동 ${aid}`), diff(v.fields)));
+  }
+  if (ov.lesson?.fields) items.push(h('li', {}, h('b', {}, '차시 정보'), diff(ov.lesson.fields)));
+  $('main.home').append(h('section', { class: 'hm-card pl-card ed-card' }, h('h3', {}, `수정 사항 ${items.length ? items.length + '곳' : '없음'}`),
+    (r.conflicts || []).length ? h('p', { class: 'ed-warn' }, '확인 필요 — 기준본이 바뀌어 적용하지 못한 수정: ', r.conflicts.join(' / ')) : null,
+    items.length ? h('ul', { class: 'ed-list' }, items) : h('p', { class: 'pl-note' }, '[수정하기]로 슬라이드를 고치면 여기에 쌓이고, 배포할 때 반영됩니다.')));
 }
 
 // 포털·차시 홈 공통 상단 메뉴·하단 제작 문구(표지와 같은 한 벌)

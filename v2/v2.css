@@ -573,3 +573,34 @@ body.cl .slide.layout-result .vres .vq > .vq-q { grid-column: 1 / -1; font-size:
 body.cl .slide.layout-result .vres .vo-btn { padding: 5px 12px; min-height: 0 !important; font-size: .88em; flex-direction: row !important; }
 body.cl .slide.layout-result .vres .vo-n { font-size: 1.1em !important; }
 body.cl .slide.layout-result .vres .vo-bar { top: 0 !important; bottom: 0 !important; height: auto !important; }
+/* ---------- 수정 모드(?edit=1, server.py 에서만) — 오른쪽 패널에서 이 장의 글을 고치고 저장 ---------- */
+body.cl.editing #app { left: calc((100vw - 460px) / 2); }
+.ed-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 460px; z-index: 50; overflow-y: auto; background: #fbfcfe; color: #1c2433; border-left: 1px solid #d9e0ec;
+  font: 14px/1.5 'Pretendard Variable', Pretendard, -apple-system, sans-serif; box-shadow: -8px 0 24px -16px #0004; display: flex; flex-direction: column; }
+.ed-panel > header { position: sticky; top: 0; z-index: 1; display: flex; align-items: baseline; gap: 10px; padding: 14px 18px; background: #fbfcfe; border-bottom: 1px solid #e3e8f1; }
+.ed-panel > header b { font-size: 16px; } .ed-panel > header small { color: #6b778c; }
+.ed-panel section, .ed-panel details { padding: 10px 18px; border-bottom: 1px solid #eef1f6; }
+.ed-panel h4, .ed-panel summary { margin: 4px 0 8px; font-size: 13px; color: #44516a; font-weight: 800; cursor: pointer; }
+.ed-row { display: block; margin: 0 0 10px; }
+.ed-lb { display: block; font-size: 12px; color: #6b778c; margin-bottom: 3px; } .ed-lb small { color: #b26b00; }
+.ed-in { width: 100%; box-sizing: border-box; resize: vertical; min-height: 34px; padding: 7px 9px; border: 1px solid #cfd7e4; border-radius: 8px; font: inherit; color: inherit; background: #fff; }
+.ed-in:focus { outline: 2px solid #2f6bff55; border-color: #2f6bff; }
+.ed-row.edited .ed-in { border-left: 4px solid #f0a500; } .ed-row.dirty .ed-in { border-left: 4px solid #2f6bff; background: #f3f7ff; }
+.ed-orig { display: block; margin-top: 2px; font-size: 12px; color: #8a94a6; white-space: pre-line; }
+.ed-by { display: flex; align-items: center; gap: 8px; padding: 10px 18px 0; font-size: 12px; color: #6b778c; } .ed-by input { flex: 1; padding: 6px 8px; border: 1px solid #cfd7e4; border-radius: 8px; font: inherit; }
+.ed-check { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.ed-warn { margin: 10px 18px 0; padding: 8px 10px; border-radius: 8px; background: #fff4e5; color: #8a4b00; font-size: 12px; }
+.ed-panel > footer { position: sticky; bottom: 0; margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: #fbfcfe; border-top: 1px solid #e3e8f1; }
+.ed-panel > footer .ed-st { flex: 1; font-size: 12px; color: #2a7d4f; } .ed-panel > footer .ed-st.bad { color: #c62828; }
+.ed-panel button { padding: 8px 14px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+.ed-panel button.go { background: #2f6bff; color: #fff; border: 0; } .ed-panel button.ghost { background: #fff; border: 1px solid #cfd7e4; color: #1c2433; }
+body.cl .cl-bar .ed-toggle.on { background: #f0a500; color: #1c2433; border-color: #f0a500; }
+body.cl .slide.is-hidden::after { content: '숨긴 장 — 수업 화면·배포본에서 빠짐'; position: absolute; top: 18px; right: 24px; z-index: 5; padding: 6px 14px; border-radius: 99px; background: #c62828; color: #fff; font-size: 18px; font-weight: 800; }
+/* 차시 홈 '수정 사항' */
+.ed-list { list-style: none; margin: 0; padding: 0 !important; display: grid; gap: 12px; }
+.ed-list li { margin: 0 !important; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.ed-list li > a { font-weight: 800; }
+.ed-tag { margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: #c62828; color: #fff; font-size: .8rem; }
+.ed-note-v { margin: 6px 0 0; color: var(--muted); }
+.ed-diff { display: grid; grid-template-columns: 1fr; gap: 2px; margin-top: 8px; font-size: .92rem; }
+.ed-diff del { color: #b42318; text-decoration: line-through; white-space: pre-line; } .ed-diff ins { color: #1a7f37; text-decoration: none; white-space: pre-line; } .ed-diff small { color: var(--muted); }
