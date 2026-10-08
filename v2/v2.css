@@ -507,3 +507,11 @@ body.cl .sl-fit::before { order: 1; } body.cl .sl-fit::after { order: 3; flex-gr
 body.cl .sl-fit > :is(.sl-intro, .sl-main, .vote, .sl-title, .result-board, .result-empty) { order: 2; margin-top: 0; margin-bottom: 0; }
 body.cl .slide.layout-title .sl-fit::after { flex-grow: 1; }
 body.cl .sl-fit > .sl-intro { margin-bottom: .7em; }
+/* 교사 원자료 그림(교사 자료 중심 차시, 2026-10-08) — 지도서 속 그림은 말풍선·표 글자가 든 수업 그림이다.
+   AI 그림처럼 16:9 로 잘라 채우거나(cover) 카메라 이동으로 확대하면 가장자리 글자가 잘려, 통째로(contain) 크게 보인다 */
+body.cl .slide .blocks .media.t-fig { align-self: center; overflow: visible; }
+body.cl .slide .blocks .media.t-fig img { width: auto; max-width: 100%; max-height: 580px; aspect-ratio: auto; object-fit: contain; animation: none; border-radius: 12px; box-shadow: 0 14px 34px -18px #0007; background: #fff; }
+/* 학생이 학생용 교재에 쓰는 빈 칸(실천 계획 표 등)은 칠판에서도 쓸 자리만큼 높게 */
+body.cl .slide .b-table td:empty { height: 2.4em; }
+/* 긴 예시 답(지도서 학습산출물 예시 등)을 가린 가림막 — 짧은 정답용 1.3em·800 이면 다섯 줄이 굵게 뭉쳤다(v2.js tidyText 가 .lq 를 붙임) */
+body.cl .b-cover.open .cv-text.lq { font-size: 1.05em; font-weight: 600; }

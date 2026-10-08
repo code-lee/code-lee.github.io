@@ -60,7 +60,9 @@ function block(b, key, redraw) {
       // 영상을 끈 뒤 파일이 없는 clip_x·v_x 는 같은 이름 그림 m_x → 원본 그림(from) 순으로 대신한다. 다 없으면 빈칸 대신 아예 뺀다
       const id = [b.id, 'm_' + b.id.replace(/^(clip|v|m)_/, ''), MEDIA[b.id]?.from].find(x => x && mfile(x, ['png', 'jpg', 'webp', 'mp4']));
       if (!id) return h('span', { class: 'b-none' });
-      const el = mediaEl(id, true); if (MEDIA[b.id]?.kind === 'icon') el.classList.add('is-icon'); return el;
+      const el = mediaEl(id, true); if (MEDIA[b.id]?.kind === 'icon') el.classList.add('is-icon');
+      if (MEDIA[id]?.src === 'teacher') el.classList.add('t-fig');  // 교사 원자료 그림 — 글자가 든 수업 그림이라 자르지 않는다(v2.css)
+      return el;
     }
     case 'text': if (b.big) return h('p', { class: 'b-text big' }, b.text);
     default: return blocks([b], true).firstChild || h('span');
@@ -150,13 +152,13 @@ const LEAD = /(?<=[^\s\u2060])(?=[·•・/…%)\]}」』’”〉》])|(?<=[)\]
 const joinWord = w => w.replace(w.replace(/_+/g, '_').length <= 9 ? NOBR : LEAD, '\u2060');  // 빈칸 밑줄 묶음은 한 글자로 센다
 // 2) 좁은 칸(카드·캡션·보기·표)에 긴 영어 낱말이 있으면 칸보다 길어 ')'·'&'만 다음 줄로 떨어졌다 → 그 칸만 글자를 조금 줄인다(.lw)
 const NARROW = '.fl-front, .fl-back, figcaption, .vo-t';  // 표 칸은 뺀다 — 한 칸만 작아지면 표가 들쭉날쭉했다
-// 3) 긴 발문은 크고 굵은 글씨 그대로면 여섯 줄 넘게 빽빽했다 → 한 단계 작고 줄간격 넓게(.lq)
+// 3) 긴 발문·긴 예시 답(가림막)은 크고 굵은 글씨 그대로면 대여섯 줄이 빽빽했다 → 한 단계 작고 줄간격 넓게(.lq)
 function tidyText(root) {
   const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   // 띄어 쓴 줄표(' — ')는 앞말에 붙여 줄 끝에 남긴다(다음 줄 첫머리에 '—'가 왔다)
   for (let n; (n = tw.nextNode());) { const t = n.data.replace(/ ([—–]) /g, '\u00a0$1 ').replace(/\S+/g, joinWord); if (t !== n.data) n.data = t; }
   root.querySelectorAll(NARROW).forEach(el => el.classList.toggle('lw', /[A-Za-z]{11,}/.test(el.textContent)));
-  root.querySelectorAll('.vq-q, .b-text.big').forEach(el => el.classList.toggle('lq', el.textContent.replace(/\u2060/g, '').length > 70));
+  root.querySelectorAll('.vq-q, .b-text.big, .cv-text').forEach(el => el.classList.toggle('lq', el.textContent.replace(/\u2060/g, '').length > 70));
   return root;
 }
 
@@ -380,7 +382,9 @@ async function homeMain() {
     }
     if (img) break;
   }
-  const acts = L.slides.filter(s => s.layout === 'activity').length;
+  // 교사 자료 중심으로 다시 짠 차시(teacher_first)는 지도안의 [활동N] 수를 센다 — 손들기 장 수를 세면 활동 셋인 차시가 '활동 1개'로 보였다
+  const acts = L.teacher_first ? new Set(L.slides.map(s => (s.sub || '').match(/^\[?활동\s*(\d+)/)?.[1]).filter(Boolean)).size
+    : L.slides.filter(s => s.layout === 'activity').length;
   $('#app').replaceChildren(
     h('header', { class: 'hm-hero' },
       vid ? h('video', { src: vid, poster: img || false, autoplay: true, muted: true, loop: true, playsinline: true }) : img ? h('img', { src: img, alt: '' }) : null,
@@ -399,7 +403,8 @@ async function homeMain() {
           h('dl', { class: 'hm-facts' },
             h('dt', {}, '슬라이드'), h('dd', {}, `${L.slides.length}장`), h('dt', {}, '활동'), h('dd', {}, `${acts}개`),
             L.model ? [h('dt', {}, '수업 모형'), h('dd', {}, L.model)] : null,
-            h('dt', {}, '준비물'), h('dd', {}, '교실 TV(또는 전자칠판) 하나')))),  // 원문 준비물엔 학생 기기·QR이 있지만 이 자료는 교사 화면 하나로 한다
+            // 원문 준비물엔 학생 기기·QR이 있지만 이 자료는 교사 화면 하나로 한다. 사이트와 상관없이 수업에 꼭 필요한 교사 준비물(검색 실습용 태블릿 등)은 차시가 prep_show 로 밝힌 것만 보탠다
+            h('dt', {}, '준비물'), h('dd', {}, L.prep_show?.length ? ['교실 TV(또는 전자칠판)', ...L.prep_show].join(', ') : '교실 TV(또는 전자칠판) 하나')))),
       h('section', { class: 'hm-card' }, h('h3', {}, `${L.minutes}분 흐름`),
         h('div', { class: 'flow' }, (L.phases || []).map(p => h('div', { class: 'ph', style: `flex:${p.min}` }, h('b', {}, p.name),
           h('small', {}, `${p.min}분 · ${L.slides.filter(s => s.phase === p.name).length}장`)))),
