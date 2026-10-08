@@ -487,7 +487,7 @@ body.cl .slide.has-bg .sl-text { padding: .85em 1.1em; }
 body.cl .slide.has-bg .sl-intro { padding: .45em .9em; }
 /* 줄 길이 — 글만 있는 칸이 화면 폭을 다 쓰면 한 줄이 60자를 넘어 다음 줄 첫머리를 놓쳤다. 표·카드·그림이 든 칸과 비교형은 넓게 둔다.
    넘치면 v2.js fitSlide 가 .wide 를 붙여 폭 제한을 먼저 풀고, 그래도 넘칠 때만 글자를 줄인다 */
-body.cl .slide:not(.layout-compare) .sl-fit:not(.wide) .sl-main:not(.has-media) > .sl-text:not(:has(.b-table, .b-flip, .b-icons, .media, .b-words, .result-board)) { max-width: 40em; }
+body.cl .slide:not(.layout-compare) .sl-fit:not(.wide) .sl-main:not(.has-media) > .sl-text:not(:has(.b-table, .b-flip, .b-icons, .media, .b-gallery, .b-words, .result-board)) { max-width: 40em; }
 body.cl .slide .sl-fit:not(.wide) .sl-intro { max-width: 38em; }
 body.cl .slide .sl-fit:not(.wide) .vq-q { max-width: 36em; }
 /* 줄 바꿈 모양 — 짧은 글(보기·카드·캡션·표 머리)은 줄 길이를 고르게, 문단은 마지막 줄에 한 낱말만 남지 않게 */
@@ -515,3 +515,61 @@ body.cl .slide .blocks .media.t-fig img { width: auto; max-width: 100%; max-heig
 body.cl .slide .b-table td:empty { height: 2.4em; }
 /* 긴 예시 답(지도서 학습산출물 예시 등)을 가린 가림막 — 짧은 정답용 1.3em·800 이면 다섯 줄이 굵게 뭉쳤다(v2.js tidyText 가 .lq 를 붙임) */
 body.cl .b-cover.open .cv-text.lq { font-size: 1.05em; font-weight: 600; }
+/* ---------- 차시 홈 · 수업 지도안 (2026-10-08) — 교사용 지도서의 기본 정보·교수·학습 과정안을 지도안처럼 표로, 원자료는 내려받기로 ---------- */
+.pl-card { margin-bottom: 18px; }
+.pl-wrap { overflow-x: auto; }
+.pl-info, .pl-steps { width: 100%; border-collapse: collapse; font-size: .95rem; line-height: 1.6; }
+.pl-info :is(th, td), .pl-steps :is(th, td) { border: 1px solid var(--line); padding: 10px 12px; vertical-align: top; text-align: left; }
+.pl-info th { width: 7.5em; white-space: nowrap; font-weight: 700; background: color-mix(in srgb, var(--pri) 8%, var(--card)); }
+.pl-steps thead th { text-align: center; white-space: nowrap; font-weight: 800; background: color-mix(in srgb, var(--pri) 12%, var(--card)); }
+.pl-steps .pl-ph { width: 3.2em; text-align: center; vertical-align: middle; font-weight: 800; background: color-mix(in srgb, var(--pri) 8%, var(--card)); }
+.pl-steps .pl-step { width: 7em; font-weight: 700; }
+.pl-steps .pl-min { width: 3.6em; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pl-steps .pl-mat { width: 12em; color: var(--muted); }
+.pl-l + .pl-l { margin-top: 2px; }
+.pl-l.pl-h { font-weight: 800; } .pl-l.pl-h:not(:first-child) { margin-top: 8px; }
+.pl-l.pl-b { padding-left: .5em; } .pl-l.pl-s { padding-left: 1.5em; } .pl-l.pl-n { color: var(--muted); }
+.pl-note { margin: 10px 0 0; color: var(--muted); font-size: .88rem; }
+.dl-list { list-style: none; margin: 0; padding: 0 !important; display: grid; gap: 10px; }
+.dl-list li { display: flex; align-items: center; gap: 14px; margin: 0 !important; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.dl-ext { flex: none; width: 3.8em; padding: 6px 0; border-radius: 8px; text-align: center; font-size: .76rem; font-weight: 900; color: #fff; background: #64748b; }
+.dl-hwpx, .dl-hwp { background: #2f6bff; } .dl-html { background: #e8762c; } .dl-pdf { background: #d6453d; }
+.dl-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; } .dl-tx small { color: var(--muted); overflow-wrap: anywhere; }
+.dl-list a { flex: none; padding: 8px 14px; font-size: .9rem; text-decoration: none; }
+@media (max-width: 640px) { .dl-list li { flex-wrap: wrap; } .dl-tx { flex-basis: calc(100% - 5em); } }
+/* 교사 웹 활동지 열기(link 블록) — 교사 화면에서 새 창으로 연다 */
+body.cl .slide .b-link { align-self: flex-start; display: inline-flex; align-items: center; gap: .5em; padding: .55em 1.2em; border-radius: 14px; background: var(--pri); color: var(--pri-ink); font-weight: 800; text-decoration: none; box-shadow: var(--shadow); }
+body.cl .slide .b-link .bl-ic { font-size: 1.1em; }
+/* 교사 그림 여러 장 나란히(gallery 블록) — 자르지 않고 칸 안에 통째로 */
+body.cl .slide .b-gallery { display: grid; gap: 18px; align-items: start; }
+body.cl .slide .b-gallery figure { margin: 0; text-align: center; min-width: 0; }
+body.cl .slide .b-gallery img { width: 100%; max-height: 520px; object-fit: contain; border-radius: 12px; background: #fff; box-shadow: 0 14px 34px -18px #0007; }
+body.cl .slide .b-gallery:has(figure:nth-child(4)) img { max-height: 300px; }
+body.cl .slide .b-gallery figcaption { margin-top: .45em; font-weight: 700; line-height: 1.4; text-wrap: balance; }
+/* 교사 그림 크기 옵션(media·gallery 의 size) — lg: 한 장 가득(세로로 긴 그림·글자가 작은 그림), sm: 앞에서 본 그림을 다시 가리킬 때 작게 */
+body.cl .slide .blocks .media.t-fig.t-lg img { max-height: 840px; }
+body.cl .slide .blocks .media.t-fig.t-sm img { max-height: 300px; }
+body.cl .slide .b-gallery.t-lg img { max-height: 760px; }
+body.cl .slide .b-gallery.t-sm img { max-height: 260px; }
+/* 그림만 있는 장(교사 그림 블록 하나·나란히 그림만)은 그림을 더 크게 — 글자가 든 교사 그림이 580px 에 묶여 작았다 */
+body.cl .slide .sl-text:not(:has(.blocks > :not(.media, .b-gallery, .b-none))) .media.t-fig:not(.t-sm) img { max-height: 780px; }
+body.cl .slide .sl-text:not(:has(.blocks > :not(.media, .b-gallery, .b-none))) .b-gallery:not(.t-sm) img { max-height: 700px; }
+/* 학생이 채울 빈 열은 줄어들지 않게(머리칸만 있고 칸이 비면 좁은 띠가 됐다) */
+body.cl .slide .b-table td:empty { min-width: 8em; }
+/* 가림막 안의 그림 예시 답 */
+body.cl .b-cover.open .media { margin-top: .4em; } body.cl .b-cover.open .media img { max-height: 520px; width: auto; max-width: 100%; object-fit: contain; }
+/* 가림막 안 그림은 자르지도 움직이지도 않는다 — 일반 본문 그림 규칙(16:9 자르기·카메라 이동)이 이겨서 교사 그림 가장자리 글자가 잘렸다 */
+body.cl .slide .blocks .b-cover.open .media img { aspect-ratio: auto; object-fit: contain; animation: none; width: auto; max-width: 100%; max-height: 520px; }
+/* 가림막 안 그림 크기(cover 의 size) — 결과 막대와 함께 나오는 장에서 그림 예시 답이 장을 줄였다 */
+body.cl .slide .blocks .b-cover.open .media.t-sm img { max-height: 300px; }
+body.cl .slide .blocks .b-cover.open .media.t-lg img { max-height: 760px; }
+/* 나란히 그림은 칸 폭이 아니라 그림 크기만큼만 — 높이 한도(sm 등)에 걸리면 칸 폭만큼 흰 띠가 생겨 보기 흉했다 */
+body.cl .slide .b-gallery img { width: auto; max-width: 100%; height: auto; }
+/* 결과 장(layout-result)의 결과 막대는 촘촘하게 — 이유 질문·예시 답과 한 화면에 들어가게(인원을 다 세면 큰 칸 막대가 장을 넘겼다) */
+body.cl .slide.layout-result .vres { gap: 10px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+body.cl .slide.layout-result .vres .vq { padding: 10px 14px; display: grid; gap: 5px; align-content: start; }
+body.cl .slide.layout-result .vres .vq:has(> .vo:nth-of-type(5)) { grid-template-columns: 1fr 1fr; }
+body.cl .slide.layout-result .vres .vq > .vq-q { grid-column: 1 / -1; font-size: .88em; margin: 0 0 4px; }
+body.cl .slide.layout-result .vres .vo-btn { padding: 5px 12px; min-height: 0 !important; font-size: .88em; flex-direction: row !important; }
+body.cl .slide.layout-result .vres .vo-n { font-size: 1.1em !important; }
+body.cl .slide.layout-result .vres .vo-bar { top: 0 !important; bottom: 0 !important; height: auto !important; }

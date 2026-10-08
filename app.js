@@ -105,7 +105,7 @@ function blocks(list, big) {
       case 'text': return h('p', { class: 'b-text' }, b.text);
       case 'bubble': return h('div', { class: 'b-bubble' }, b.who ? h('b', {}, b.who) : null, h('span', {}, b.text));
       // 원문 항목에 이미 ·, -, ① 같은 머리표가 있으면 목록 점을 빼고 들여쓰기만(점이 두 번 찍혔다)
-      case 'list': return h('ul', { class: 'b-list' + (b.items.some(i => /^\s*[·\-–•※①-⑳○●◎△]/.test(i)) ? ' own' : '') }, b.items.map(i => h('li', { class: /^\s*[-–]/.test(i) ? 'sub' : '' }, i)));
+      case 'list': return h('ul', { class: 'b-list' + (b.items.some(i => /^\s*(?:[·∙◦▪\-–•※①-⑳○●◎△]|\d{1,2}[.)]\s)/.test(i)) ? ' own' : '') }, b.items.map(i => h('li', { class: /^\s*[-–]/.test(i) ? 'sub' : '' }, i)));
       case 'table': return h('div', { class: 'b-table' }, h('table', {},
         b.head ? h('thead', {}, h('tr', {}, b.head.map(x => h('th', {}, x)))) : null,
         h('tbody', {}, b.rows.map(r => h('tr', {}, (Array.isArray(r) ? r : [r]).map(x => h('td', {}, x)))))));

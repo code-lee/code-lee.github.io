@@ -6,6 +6,8 @@ const LVK = { e: 'elem', m: 'mid', h: 'high' }, KLV = { elem: 'e', mid: 'm', hig
 const LVN = { elem: '초등', mid: '중등', high: '고등' };
 const PATH = location.pathname.slice(0).match(/^\/([emh])(?:\/(\d+)(?:\/(\w+))?)?/) || [];
 const LID = PATH[2] ? `${LVK[PATH[1]]}-${PATH[2]}` : null;
+let DLS = null;
+const dlUrl = file => DLS ? DLS.base + file.split('/').map(encodeURIComponent).join('/') : null;
 const jget = (k, d) => { try { return JSON.parse(ls.get(k)) ?? d; } catch (e) { return d; } };
 const jset = (k, v) => ls.set(k, JSON.stringify(v));
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -15,6 +17,7 @@ async function loadV2(id) {
   L.steps = Object.entries(L.activities).map(([k, a]) => ({ ...a, id: k }));  // review·answerText 가 L.steps 를 찾는다
   MEDIA = Object.fromEntries((L.media || []).map(m => [m.id, m]));
   FILES = new Set(await getJSON(`/api/media/${id}.json`).catch(() => []));
+  DLS = await getJSON('/v2/downloads.json').catch(() => null);  // 관련 자료(원자료) 목록 — link 블록·차시 홈 '관련 자료'
   document.body.dataset.tone = L.level;
   document.title = `${L.title} · AI 윤리`;
   const th = `/${KLV[L.level]}/theme.css`;  // 학생 폰은 주소에 학교급이 없어서 여기서 붙인다
@@ -44,7 +47,7 @@ function block(b, key, redraw) {
       const el = h('button', { class: 'b-cover' + (open ? ' open' : ''), 'data-key': key, onclick: () => {
           OPEN[key] = !OPEN[key]; if (OPEN[key]) SFX.reveal();
           const nu = tidyText(block(b, key, redraw)); nu.className = el.className.replace(/\bopen\b/, '').trim() + (OPEN[key] ? ' open' : ''); el.replaceWith(nu);  // 그 자리에서만 바꾼다
-        } }, open ? h('span', { class: 'cv-text' }, b.text) : h('span', { class: 'cv-hint' }, b.hint || '눌러서 확인'));
+        } }, open ? (b.id ? [b.text ? h('span', { class: 'cv-text' }, b.text) : null, (m => (MEDIA[b.id]?.src === 'teacher' && m.classList.add('t-fig'), b.size && m.classList.add('t-' + b.size), m))(mediaEl(b.id, true))] : h('span', { class: 'cv-text' }, b.text)) : h('span', { class: 'cv-hint' }, b.hint || '눌러서 확인'));  // id 가 있으면 그림 예시 답(결과물 예시 등)
       return el;
     }
     case 'flip': return h('div', { class: 'b-flip' }, b.items.map((it, j) => {
@@ -62,7 +65,18 @@ function block(b, key, redraw) {
       if (!id) return h('span', { class: 'b-none' });
       const el = mediaEl(id, true); if (MEDIA[b.id]?.kind === 'icon') el.classList.add('is-icon');
       if (MEDIA[id]?.src === 'teacher') el.classList.add('t-fig');  // 교사 원자료 그림 — 글자가 든 수업 그림이라 자르지 않는다(v2.css)
+      if (b.size) el.classList.add('t-' + b.size);
       return el;
+    }
+    case 'link': {  // 교사 웹 활동지 — 관련 자료의 같은 파일을 새 창으로 연다(교사 화면에서 시연·진행)
+      const url = dlUrl(b.file);
+      return url ? h('a', { class: 'b-link', href: url, target: '_blank', rel: 'noopener' }, h('span', { class: 'bl-ic', 'aria-hidden': 'true' }, '↗'), b.hint || '자료 열기') : h('span', { class: 'b-none' });
+    }
+    case 'gallery': {  // 교사 그림 여러 장 나란히(사례 A·B, 단계 그림 등) — 그림은 자르지 않는다
+      const items = b.items.filter(it => mfile(it.id, ['png', 'jpg', 'webp']));
+      const cols = items.length <= 3 ? items.length : items.length === 4 ? 2 : 3;
+      return items.length ? h('div', { class: 'b-gallery' + (b.size ? ' t-' + b.size : ''), style: `grid-template-columns:repeat(${cols},minmax(0,1fr))` }, items.map(it =>
+        h('figure', {}, h('img', { src: murl(it.id, ['png', 'jpg', 'webp']), alt: MEDIA[it.id]?.desc || '', loading: 'lazy' }), it.text ? h('figcaption', {}, it.text) : null))) : h('span', { class: 'b-none' });
     }
     case 'text': if (b.big) return h('p', { class: 'b-text big' }, b.text);
     default: return blocks([b], true).firstChild || h('span');
@@ -74,7 +88,7 @@ const buildCount = sl => { const st = buildSteps(sl); return st.length ? st[st.l
 
 function slideBody(sl, build, board, redraw) {
   const has = id => mfile(id, ['png', 'jpg', 'webp', 'mp4']);  // 파일 없는 그림은 자리표시 대신 아예 안 그린다
-  const inBlocks = new Set((sl.blocks || []).filter(b => b.type === 'media').map(b => b.id));  // 본문에 이미 있는 그림은 옆 칸에 또 안 넣는다
+  const inBlocks = new Set((sl.blocks || []).flatMap(b => b.type === 'media' ? [b.id] : b.type === 'gallery' ? b.items.map(it => it.id) : []));  // 본문에 이미 있는 그림은 옆 칸에 또 안 넣는다
   const bgId = MEDIA[sl.bg]?.from || sl.bg;
   const prev = L.slides[L.slides.indexOf(sl) - 1], prevSet = new Set(prev?.layout !== 'activity' ? prev?.assets || [] : []);  // 나눈 장에서 같은 그림이 연달아 나오지 않게
   const media = dedupe(sl.assets || []).filter(id => has(id) && !inBlocks.has(id) && id !== bgId && MEDIA[id]?.kind !== 'icon' && !prevSet.has(id)).slice(0, 2);
@@ -134,7 +148,8 @@ function fitSlide(stage, box) {
   box.classList.remove('wide');
   if (size(1).h > H + 2) box.classList.add('wide');
   // 0.75배까지만 줄인다 — 그래도 넘치는 장은 split_dense.py 가 두 장으로 나눈다(PPT 는 줄여 넣는 게 아니라 장을 나눈다)
-  const MIN = 0.75;
+  // 결과 장은 인원을 다 세면 막대가 길어진다 — 잘리기보다 조금 더 줄이는 쪽(0.65배까지)
+  const MIN = stage.classList.contains('layout-result') ? 0.65 : 0.75;
   for (let z = 1, k = 0, s = size(1); (s.h > H + 2 || s.w > W + 2) && z > MIN && k < 16; k++, s = size(z)) {
     z = Math.max(MIN, z * Math.min(0.96, (H / s.h) + 0.03, (W / s.w) + 0.03)); box.style.zoom = z;
   }
@@ -371,6 +386,12 @@ async function portalMain() {
     $('#list').before(feat, h('h2', { class: 'row-t' }, '전체 10호'));
   }
 }
+// 지도안 칸 글 — 원문 줄바꿈과 머리표(▣ • - ※ ▶)를 지켜 지도안처럼 들여 쓴다
+const planLines = t => String(t || '').split('\n').filter(x => x.trim()).map(x => {
+  const v = x.trim(), k = /^[▣■]/.test(v) ? ' pl-h' : /^[•∙◦]/.test(v) ? ' pl-b' : /^[-–]/.test(v) ? ' pl-s' : /^※/.test(v) ? ' pl-n' : '';
+  return h('div', { class: 'pl-l' + k }, v);
+});
+const fmtSize = n => n >= 1048576 ? `${(n / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(n / 1024))}KB`;
 async function homeMain() {
   await loadV2(LID);
   const done = jget('eth2_' + LID, {}), unit = { elem: '섬', mid: '화', high: '호' }[L.level];
@@ -385,6 +406,33 @@ async function homeMain() {
   // 교사 자료 중심으로 다시 짠 차시(teacher_first)는 지도안의 [활동N] 수를 센다 — 손들기 장 수를 세면 활동 셋인 차시가 '활동 1개'로 보였다
   const acts = L.teacher_first ? new Set(L.slides.map(s => (s.sub || '').match(/^\[?활동\s*(\d+)/)?.[1]).filter(Boolean)).size
     : L.slides.filter(s => s.layout === 'activity').length;
+  const files = DLS, dl = files?.lessons?.[LID] || [];
+  // 수업 지도안 — 교사용 지도서의 '기본 정보'·'교수·학습 과정안'을 원문 그대로(L.plan). 아직 옮기지 않은 차시는 차시 데이터·슬라이드로 채운다
+  const P = L.plan || {};
+  const info = P.info?.length ? P.info : [['학년', L.grade], ['수업 모형', L.model], ['성취기준', (L.standards || []).join('\n')],
+    ['학습 목표', (L.goal || []).map((g, i) => `${i + 1}. ${g}`).join('\n')], ['준비물', (L.prep || []).join(', ')]].filter(r => r[1]);
+  const infoRows = info.map(r => typeof r[0] === 'string' ? [r] : r), infoCols = Math.max(1, ...infoRows.map(r => r.length));
+  const steps = P.steps?.length ? P.steps : L.slides.reduce((out, s) => {
+    const k = s.sub || s.phase, last = out[out.length - 1];
+    if (last && last.step === k && last.phase === s.phase) { if (s.title && !last.activity.includes(s.title)) last.activity += '\n' + s.title; }
+    else out.push({ phase: s.phase, step: k, subs: [k], activity: s.title || '' });
+    return out;
+  }, []);
+  // 시간은 이 디지털 교과서의 슬라이드 시간(sub 별 합) — 지도서에 시간이 적혀 있으면 슬라이드도 그 시간으로 짠다
+  const minOf = st => st.min ?? (st.subs ? L.slides.filter(s => st.subs.includes(s.sub)).reduce((a, s) => a + (s.min || 0), 0) : null);
+  const sess = steps.some(st => st.session != null);  // 지도서 과정안이 차시(1·2교시)로 나뉜 경우
+  const span = (i, key) => { const n = steps.slice(i).findIndex(x => x[key] !== steps[i][key]); return n < 0 ? steps.length - i : n; };
+  const rows = steps.map((st, i) => {
+    const m = minOf(st);
+    return h('tr', {},
+      sess && (i === 0 || steps[i - 1].session !== st.session) ? h('th', { class: 'pl-ph', scope: 'rowgroup', rowspan: span(i, 'session') }, st.session ?? '') : null,
+      i === 0 || steps[i - 1].phase !== st.phase || (sess && steps[i - 1].session !== st.session)
+        ? h('th', { class: 'pl-ph', scope: 'rowgroup', rowspan: Math.min(span(i, 'phase'), sess ? span(i, 'session') : Infinity) }, st.phase) : null,
+      h('th', { class: 'pl-step', scope: 'row' }, st.step),
+      h('td', { class: 'pl-act' }, planLines(st.activity)),
+      h('td', { class: 'pl-min' }, m == null ? '' : `${Math.round(m * 10) / 10}분`),
+      h('td', { class: 'pl-mat' }, planLines(st.materials)));
+  });
   $('#app').replaceChildren(
     h('header', { class: 'hm-hero' },
       vid ? h('video', { src: vid, poster: img || false, autoplay: true, muted: true, loop: true, playsinline: true }) : img ? h('img', { src: img, alt: '' }) : null,
@@ -392,23 +440,33 @@ async function homeMain() {
         h('a', { class: 'back', href: `/${PATH[1]}/` }, `← ${LVN[L.level]} 차시 목록`),
         h('span', { class: 'hm-no' }, `${L.no}${unit}`),
         h('h1', { class: 'b-letter' }, L.title),
-        h('p', { class: 'hm-meta' }, [L.area, L.grade, `${L.minutes}분`].filter(Boolean).join(' · ')),
+        h('p', { class: 'hm-meta' }, [L.area, L.grade, `${L.minutes}분`, `슬라이드 ${L.slides.length}장`].filter(Boolean).join(' · ')),
         h('div', { class: 'row' },
           h('a', { class: 'go big', href: `/${PATH[1]}/${L.no}/class` }, done.idx ? `이어서 수업하기 · ${done.idx + 1}번 슬라이드` : '수업 시작'),
           done.idx ? h('a', { class: 'ghost big', href: `/${PATH[1]}/${L.no}/class`, onclick: () => jset('eth2_' + LID, {}) }, '처음부터') : null))),
     h('main', { class: 'home' },
-      h('div', { class: 'hm-grid' },
-        h('section', { class: 'hm-card' }, h('h3', {}, '학습 목표'), h('ol', {}, (L.goal || []).map(g => h('li', {}, g)))),
-        h('section', { class: 'hm-card' }, h('h3', {}, '이 차시는'),
-          h('dl', { class: 'hm-facts' },
-            h('dt', {}, '슬라이드'), h('dd', {}, `${L.slides.length}장`), h('dt', {}, '활동'), h('dd', {}, `${acts}개`),
-            L.model ? [h('dt', {}, '수업 모형'), h('dd', {}, L.model)] : null,
-            // 원문 준비물엔 학생 기기·QR이 있지만 이 자료는 교사 화면 하나로 한다. 사이트와 상관없이 수업에 꼭 필요한 교사 준비물(검색 실습용 태블릿 등)은 차시가 prep_show 로 밝힌 것만 보탠다
-            h('dt', {}, '준비물'), h('dd', {}, L.prep_show?.length ? ['교실 TV(또는 전자칠판)', ...L.prep_show].join(', ') : '교실 TV(또는 전자칠판) 하나')))),
-      h('section', { class: 'hm-card' }, h('h3', {}, `${L.minutes}분 흐름`),
+      h('section', { class: 'hm-card pl-card' }, h('h3', {}, '수업 지도안'),
+        h('div', { class: 'pl-wrap' }, h('table', { class: 'pl-info' },
+          // 지도서 '기본 정보' 표처럼 한 줄에 칸 여럿(학년 | 차시 | 수업 모형) — 행 = [이름, 값] 하나 또는 그 묶음, 짧은 행의 마지막 칸이 남는 폭을 채운다
+          h('tbody', {}, infoRows.map(r => h('tr', {}, r.map(([k, v], j) => [h('th', { scope: 'row' }, k),
+            h('td', { colspan: j === r.length - 1 && r.length < infoCols ? 2 * (infoCols - r.length) + 1 : false }, planLines(v))]))))))),
+      h('section', { class: 'hm-card pl-card' }, h('h3', {}, `교수·학습 과정 · ${L.minutes}분`),
         h('div', { class: 'flow' }, (L.phases || []).map(p => h('div', { class: 'ph', style: `flex:${p.min}` }, h('b', {}, p.name),
           h('small', {}, `${p.min}분 · ${L.slides.filter(s => s.phase === p.name).length}장`)))),
-        h('ol', { class: 'hm-steps' }, L.slides.filter((s, i, a) => s.sub && s.sub !== a[i - 1]?.sub).map(s => h('li', {}, h('small', {}, s.phase), s.sub))))));
+        h('div', { class: 'pl-wrap' }, h('table', { class: 'pl-steps' },
+          h('thead', {}, h('tr', {}, [sess ? '차시' : null, '단계', '학습 과정', '교수·학습 활동', '시간', '자료(▶) 및 유의점(※)'].filter(Boolean).map(t => h('th', { scope: 'col' }, t)))),
+          h('tbody', {}, rows))),
+        // 원문 준비물엔 학생 기기·QR이 있을 수 있지만 이 디지털 교과서는 교사 화면 하나로 진행한다(2026-10-06)
+        h('p', { class: 'pl-note' }, `시간은 이 디지털 교과서의 슬라이드 진행 기준입니다. 교실 TV(또는 전자칠판) 하나로 진행하며 슬라이드 ${L.slides.length}장${acts ? `, 활동 ${acts}개` : ''}입니다.`)),
+      dl.length ? h('section', { class: 'hm-card pl-card' }, h('h3', {}, '관련 자료'),
+        h('ul', { class: 'dl-list' }, dl.map(e => {
+          const name = e.file.split('/').pop(), ext = name.split('.').pop().toLowerCase();
+          const url = files.base + e.file.split('/').map(encodeURIComponent).join('/');
+          return h('li', {}, h('span', { class: `dl-ext dl-${ext}` }, ext.toUpperCase()),
+            h('span', { class: 'dl-tx' }, h('b', {}, e.label), h('small', {}, `${name} · ${fmtSize(e.size)}`)),
+            ext === 'html' ? h('a', { class: 'ghost', href: url, target: '_blank', rel: 'noopener' }, '열기') : null,
+            h('a', { class: 'go', href: url, download: name }, '내려받기'));
+        }))) : null));
 }
 
 // 포털·차시 홈 공통 상단 메뉴·하단 제작 문구(표지와 같은 한 벌)
