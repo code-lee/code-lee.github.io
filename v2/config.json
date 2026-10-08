@@ -1,0 +1,4 @@
+{
+ "memo_sheet": "https://script.google.com/macros/s/AKfycbz1_kEET9CUngh2er3wKS__VDDI22wAzJFeSwMIkAsc-vXEH-3v1WpUsjfOoLzWfBGo4A/exec",
+ "_memo_sheet": "슬라이드 메모를 모을 구글 시트 웹 앱 주소(https://script.google.com/macros/s/.../exec) — 설치는 memo_sheet.gs 맨 위. 비우면 로컬 서버는 lessons_v2/memos/, 배포 사이트는 브라우저에 저장"
+}

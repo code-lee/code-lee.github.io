@@ -10,6 +10,90 @@ let DLS = null;
 // 수정 기능 — server.py 로 띄웠을 때만 있다(정적 배포본에는 /api/edit/status 가 없어 null). 경로 규칙은 server.py EDIT_PATH 와 같다
 let EDIT = null;
 const editStatus = () => Promise.resolve(null);
+// 슬라이드별 메모·수정 요청 — 저장소는 셋 중 하나(MEMO.mode)
+//   sheet  구글 시트(memo_sheet.gs 웹 앱, /v2/config.json 의 memo_sheet) — 어디서 남겨도 한 시트에 모인다. 응답이 1~3초라 마지막 사본(eth2_memo_cache_<차시>)을 먼저 보여 준다
+//   server 시트가 없고 이 컴퓨터의 server.py 로 열었을 때 — lessons_v2/memos/<차시>.json
+//   local  시트가 없는 배포 사이트 — 이 브라우저(eth2_memos_<차시>), 차시 홈에서 파일로 내려받아 전달
+const MEMO_KINDS = ['수정 요청', '메모'];
+const pad2 = n => String(n).padStart(2, '0');
+const nowStamp = (d = new Date()) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+const memoId = () => 'm' + Date.now() + Math.random().toString(36).slice(2, 6);
+// 메모 묶음 {장 id: [메모]} 에 한 동작을 적용 — 이 브라우저 저장, 그리고 완료·삭제를 서버 답 전에 먼저 보여 줄 때
+function memoApply(M, b, by = '', at = nowStamp()) {
+  const arr = (M[b.sid] ||= []);
+  if (b.action === 'add') arr.push({ id: b.id || memoId(), kind: b.kind, text: b.text.trim(), by, at, done: false });
+  else if (b.action === 'update') { const m = arr.find(x => x.id === b.id); if (m && 'done' in b) { m.done = !!b.done; if (m.done) m.done_at = at; else delete m.done_at; } }
+  else if (b.action === 'delete') M[b.sid] = arr.filter(x => x.id !== b.id);
+  for (const k of Object.keys(M)) if (!M[k].length) delete M[k];
+  return M;
+}
+const MEMO = {
+  mode: 'local', sheet: '',
+  async init() {
+    this.sheet = (await getJSON('/v2/config.json').catch(() => ({}))).memo_sheet || '';
+    this.mode = this.sheet ? 'sheet' : EDIT?.can_edit ? 'server' : 'local';
+  },
+  where(lid) {
+    return { sheet: '구글 시트에 저장 · 어디서 남겨도 한 곳에 모여요', server: `서버 파일에 저장 · lessons_v2/memos/${lid}.json`, local: '이 브라우저에 저장돼요 · 차시 홈에서 파일로 내려받아 전달' }[this.mode];
+  },
+  cached(lid) { return this.mode === 'sheet' ? jget('eth2_memo_cache_' + lid, {}) : null; },
+  // Apps Script 웹 앱은 미리 묻기(OPTIONS)를 받지 못한다 — JSON 도 글자(text/plain)로 보낸다. 오류도 200 으로 오니 ok 를 본다
+  async sheetReq(q, body) {
+    const r = await fetch(this.sheet + q, { cache: 'no-store', signal: AbortSignal.timeout?.(25000), ...(body ? { method: 'POST', body: JSON.stringify(body) } : {}) });
+    const j = await r.json().catch(() => ({ error: `시트 응답 ${r.status}` }));
+    if (!j.ok) throw new Error(j.error || '시트 오류');
+    return j;
+  },
+  async load(lid) {
+    if (this.mode === 'sheet') { const M = (await this.sheetReq(`?lid=${lid}`)).memos || {}; jset('eth2_memo_cache_' + lid, M); return M; }
+    return this.mode === 'server' ? ((await getJSON(`/api/memos/${lid}`).catch(() => ({}))).memos || {}) : jget('eth2_memos_' + lid, {});
+  },
+  async act(lid, body) {
+    const by = ls.get('eth2_edit_by') || '';
+    if (this.mode === 'sheet') { const M = (await this.sheetReq('', { ...body, lid, by })).memos || {}; jset('eth2_memo_cache_' + lid, M); return M; }
+    if (this.mode === 'server') {
+      const r = await fetch(`/api/memos/${lid}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(ls.get('eth2_edit_token') ? { 'X-Edit-Token': ls.get('eth2_edit_token') } : {}) }, body: JSON.stringify({ ...body, by }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || r.status);
+      return j.memos || {};
+    }
+    const M = memoApply(jget('eth2_memos_' + lid, {}), body, by);
+    if (Object.keys(M).length) jset('eth2_memos_' + lid, M); else try { localStorage.removeItem('eth2_memos_' + lid); } catch (e) {}
+    return M;
+  },
+};
+const download = (name, text, type) => { const a = h('a', { href: URL.createObjectURL(new Blob([text], { type })), download: name }); document.body.append(a); a.click(); a.remove(); };
+const memoLi = (m, act) => h('li', { class: m.done ? 'done' : '' },
+  h('input', { type: 'checkbox', checked: !!m.done, title: '완료 표시', onchange: e => act({ action: 'update', id: m.id, done: e.target.checked }) }),
+  h('div', { class: 'memo-body' }, h('span', { class: 'memo-kind' + (m.kind === '수정 요청' ? ' fix' : '') }, m.kind), h('p', {}, m.text),
+    h('small', {}, [m.by || '이름 없음', (m.at || '').slice(5, 16), m.done ? '완료' : ''].filter(Boolean).join(' · '))),
+  h('button', { class: 'memo-del', onclick: () => confirm('이 메모를 지울까요?') && act({ action: 'delete', id: m.id }) }, '삭제'));
+// 모든 차시 메모 {차시: {슬라이드: [메모]}} — 시트·서버 파일(lessons_v2/memos/)·이 브라우저(eth2_memos_*) 중 지금 저장소에서
+async function memoAll() {
+  if (MEMO.mode === 'sheet') return (await MEMO.sheetReq('')).lessons || {};
+  if (MEMO.mode === 'server') return (await getJSON('/api/memos').catch(() => ({}))).lessons || {};
+  const out = {};
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('eth2_memos_')) { const M = jget(k, {}); if (Object.keys(M).length) out[k.slice(11)] = M; } }
+  return out;
+}
+async function memoExport(fmt) {
+  const all = await memoAll().catch(e => (alert('메모를 불러오지 못했어요: ' + e.message), null)); if (!all) return;
+  const lids = Object.keys(all).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+  if (!lids.length) return alert('내려받을 메모가 없어요.');
+  const stamp = nowStamp().replace(/[-: ]/g, '').slice(0, 12);
+  if (fmt === 'json') return download(`메모_${stamp}.json`, JSON.stringify({ lessons: all, exported_at: nowStamp(), from: location.host }, null, 1), 'application/json');
+  // CSV — 엑셀에서 한글이 깨지지 않게 BOM. 장 번호는 수업 화면 번호(숨긴 장 빼고)
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`, rows = [['차시', '장 번호', '장 제목', '종류', '내용', '작성자', '작성 시각', '완료', '완료 시각', '장 id']];
+  for (const lid of lids) {
+    const d = await getJSON(`/lessons_v2/${lid}.json`).catch(() => null), sl = (d?.slides || []).filter(x => !x.hidden);
+    const at = sid => { const i = sl.findIndex(x => x.id === sid); return i < 0 ? 1e9 : i; };
+    for (const sid of Object.keys(all[lid]).sort((a, b) => at(a) - at(b))) {
+      const i = at(sid), x = sl[i];
+      for (const m of all[lid][sid]) rows.push([d ? `${lid} ${d.title}` : lid, x ? i + 1 : '숨긴 장', x ? x.title || x.sub || '' : '', m.kind, m.text, m.by, m.at, m.done ? '완료' : '', m.done_at || '', sid]);
+    }
+  }
+  download(`메모_${stamp}.csv`, '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n') + '\r\n', 'text/csv');
+}
 const getp = (o, path) => path.split('.').reduce((x, k) => x == null ? undefined : x[Array.isArray(x) ? +k : k], o);
 const setp = (o, path, v) => { const ks = path.split('.'), last = ks.pop(), t = ks.reduce((x, k) => x[Array.isArray(x) ? +k : k], o); t[Array.isArray(t) ? +last : last] = v; };
 const dlUrl = file => DLS ? DLS.base + file.split('/').map(encodeURIComponent).join('/') : null;
@@ -252,6 +336,12 @@ async function classMain() {
   const want = QS.get('s');  // ?s=<슬라이드 id> — 그 장부터(차시 홈 '수정 사항'의 링크, 수정 모드 오갈 때 자리 유지)
   if (want) { const i = L.slides.findIndex(x => x.id === want); if (i >= 0) { S.idx = i; S.build = 99; } }
   if (editing) S.build = 99;  // 수정 모드는 블록을 다 펼쳐 보인다
+  await MEMO.init();
+  let MEMOS = MEMO.cached(LID) || await MEMO.load(LID), memoSeq = 0;  // memoSeq — 늦게 온 시트 답이 방금 바꾼 것을 덮지 않게
+  const openN = sid => (MEMOS[sid] || []).filter(m => !m.done).length, DRAFT = {};
+  const memoBtn = sl => h('button', { class: 'ghost memo-btn' + (openN(sl.id) ? ' has' : ''), onclick: () => memoOpen(sl), title: '이 장 메모·수정 요청 남기기 (M)' },
+    '메모', (MEMOS[sl.id] || []).length ? h('b', { class: 'memo-n' }, openN(sl.id) || '✓') : null);
+  const jumpText = (x, k) => `${editing ? edMark(x) : ''}${openN(x.id) ? `[메모 ${openN(x.id)}] ` : ''}${k + 1}. ${x.title || x.sub || ''}`;
   let notes = ls.get('eth2_notes') === '1';
   const ANS = jget(KEY + '_ans', {}), REV = {};
   const VOTES = jget(KEY + '_votes', {});  // 선택형 집계 {활동: {질문: {보기: 인원}}}      // 활동별 담은 의견 {활동: [값…]}
@@ -367,10 +457,11 @@ async function classMain() {
       h('button', { class: 'go', onclick: next, disabled: S.idx === L.slides.length - 1 && S.build >= buildCount(sl) }, '▶'),
       h('span', { class: 'cl-count' }, `${S.idx + 1} / ${L.slides.length}`),
       actCtl,
-      h('select', { class: 'jump', onchange: e => go(+e.target.value, 99) }, L.slides.map((x, k) => h('option', { value: k, selected: k === S.idx }, `${editing ? edMark(x) : ''}${k + 1}. ${x.title || x.sub || ''}`))),
+      h('select', { class: 'jump', onchange: e => go(+e.target.value, 99) }, L.slides.map((x, k) => h('option', { value: k, selected: k === S.idx }, jumpText(x, k)))),
       h('span', { class: 'sp' }),
       h('button', { class: 'ghost' + (BGM ? ' on' : ''), onclick: e => toggleBGM(e.currentTarget) }, '배경음'),
       h('button', { class: 'ghost', onclick: () => { if (confirm('처음 슬라이드로 돌아갈까요? 세어 둔 인원도 지워집니다.')) { for (const k in VOTES) delete VOTES[k]; jset(KEY + '_votes', VOTES); for (const k in OPEN) delete OPEN[k]; go(0); } } }, '처음으로'),
+      memoBtn(sl),
       EDIT ? h('a', { class: 'ghost ed-toggle' + (editing ? ' on' : ''), href: `?${editing ? '' : 'edit=1&'}s=${encodeURIComponent(sl.id)}`, title: editing ? '수정을 끝내고 수업 화면으로' : '이 장을 고치기(이 컴퓨터의 수정 파일에 저장)' }, editing ? '수정 끝' : '수정') : null,
       h('button', { class: 'ghost', onclick: () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}) }, '전체 화면'));
     // 같은 활동 장에서 보기를 누른 것 — 보기 칸과 아래 막대만 바꾼다(장 전체를 다시 그려 그림·배경이 깜빡였다)
@@ -404,6 +495,61 @@ async function classMain() {
     if (editing) edShow(sl);
   }
 
+  // ───── 메모 창 — 이 장 메모·수정 요청을 남기고(종류·내용·이름), 완료 표시·삭제 ─────
+  // 메모만 바뀌면 아래 막대(버튼 수·장 고르기)와 수정 패널 단추만 고친다 — 장을 다시 그리면 등장 효과가 다시 돈다
+  const memoSync = () => {
+    const sl = L.slides[S.idx];
+    document.querySelector('.cl-bar .memo-btn')?.replaceWith(memoBtn(sl));
+    document.querySelectorAll('.cl-bar .jump option').forEach((o, k) => { o.textContent = jumpText(L.slides[k], k); });
+    const eb = document.querySelector('.ed-panel .ed-memo'); if (eb) eb.textContent = `이 장 메모·수정 요청 ${(MEMOS[sl.id] || []).length}개`;
+  };
+  const memoRefresh = () => { const n = memoSeq; return MEMO.load(LID).then(M => { if (n === memoSeq) { MEMOS = M; memoSync(); } return true; }, () => false); };
+  function memoOpen(sl) {
+    $('dialog.memo-dlg')?.remove();
+    const idx = L.slides.indexOf(sl), dlg = h('dialog', { class: 'memo-dlg' }), list = h('div', { class: 'memo-lw' });
+    const st = h('small', { class: 'memo-st' }), say = (t, bad) => { st.textContent = t; st.classList.toggle('bad', !!bad); };
+    const kind = h('select', { onchange: e => ls.set('eth2_memo_kind', e.target.value) }, MEMO_KINDS.map(k => h('option', { value: k }, k)));
+    kind.value = ls.get('eth2_memo_kind') || MEMO_KINDS[0];
+    const name = h('input', { placeholder: '이름(선택)', onchange: e => ls.set('eth2_edit_by', e.target.value.trim()) }); name.value = ls.get('eth2_edit_by') || '';
+    const ta = h('textarea', { rows: 4, placeholder: '이 장에서 고칠 점이나 메모 (Ctrl+Enter 저장)', oninput: e => { DRAFT[sl.id] = e.target.value; } }); ta.value = DRAFT[sl.id] || '';
+    const save = h('button', { class: 'go', onclick: () => add() }, '저장');
+    const drawList = () => { const arr = MEMOS[sl.id] || []; list.replaceChildren(...(arr.length ? [h('ul', { class: 'memo-list' }, arr.map(m => memoLi(m, run)))] : [])); };
+    // 완료·삭제는 먼저 보이고 뒤에서 저장, 남기기는 저장될 때까지 [저장 중…]
+    const run = async body => {
+      body = { sid: sl.id, ...body };
+      const isAdd = body.action === 'add', n = ++memoSeq;
+      if (isAdd) { save.disabled = true; save.textContent = '저장 중…'; say(MEMO.mode === 'sheet' ? '구글 시트에 저장하는 중…' : '저장하는 중…'); }
+      else { MEMOS = memoApply(structuredClone(MEMOS), body, ls.get('eth2_edit_by') || ''); drawList(); memoSync(); }
+      try {
+        const M = await MEMO.act(LID, body);
+        if (n === memoSeq) MEMOS = M;
+        if (isAdd && ta.value === body.text) { ta.value = ''; DRAFT[sl.id] = ''; }
+        say(isAdd ? '저장했어요' : MEMO.where(LID));
+      } catch (e) {
+        say('저장 못 함: ' + e.message, true);
+        await memoRefresh();  // 실제로 저장된 상태로 되돌린다
+      }
+      if (isAdd) { save.disabled = false; save.textContent = '저장'; }
+      if (dlg.open) drawList();
+      memoSync();
+    };
+    const add = () => {
+      if (save.disabled) return;
+      if (!ta.value.trim()) return ta.focus();
+      run({ action: 'add', id: memoId(), kind: kind.value, text: ta.value, no: idx + 1, title: sl.title || sl.sub || '', ltitle: `${LVN[L.level]} ${L.no}차시 ${L.title}` });
+    };
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && !e.isComposing) { e.preventDefault(); add(); } });
+    dlg.append(h('div', { class: 'memo-in' },
+      h('header', {}, h('b', {}, `${idx + 1}번 슬라이드`), h('span', {}, sl.title || sl.sub || sl.id), h('button', { class: 'x', onclick: () => dlg.close(), 'aria-label': '닫기' }, '×')),
+      list, h('div', { class: 'memo-form' }, h('div', { class: 'memo-row' }, kind, name), ta, h('div', { class: 'memo-row' }, st, save))));
+    dlg.addEventListener('close', () => dlg.remove());
+    document.body.append(dlg); dlg.showModal(); drawList(); ta.focus(); say(MEMO.where(LID));
+    if (MEMO.mode === 'sheet') {  // 다른 사람이 남긴 것까지 — 시트에서 새로 읽어 목록만 바꾼다
+      say('시트에서 불러오는 중…');
+      memoRefresh().then(ok => { if (!dlg.open || save.disabled) return; drawList(); say(ok ? MEMO.where(LID) : '시트를 불러오지 못했어요 · 마지막으로 본 목록이에요', !ok); });
+    }
+  }
+
   // ───── 수정 패널(?edit=1) — 이 장의 글 칸을 고치면 바로 미리 보이고, [저장]하면 lessons_v2/edits/<차시>.json 에 쌓인다 ─────
   const ED = { ov: {}, conflicts: [], sid: null, inputs: [], t: 0 };
   const edBy = () => ls.get('eth2_edit_by') || '', edTok = () => ls.get('eth2_edit_token') || '';
@@ -425,8 +571,6 @@ async function classMain() {
     if (ED.sid === sl.id && $('.ed-panel')) return;
     ED.sid = sl.id; ED.inputs = [];
     const aid = sl.activity || sl.act, act = aid ? L.steps.find(a => a.id === aid) : null, sb = edBucket('slide', sl.id);
-    ED.note = h('textarea', { class: 'ed-in ed-note', rows: 3, placeholder: '검토 메모 — 그림 교체·순서 변경처럼 여기서 못 고치는 것을 적어 두세요' });
-    ED.note.value = sb.note || ''; ED.note.addEventListener('input', () => edStatus('저장 안 함'));
     ED.hide = h('input', { type: 'checkbox' }); ED.hide.checked = !!sb.hidden; ED.hide.addEventListener('change', () => edStatus('저장 안 함'));
     const conf = ED.conflicts.filter(c => c.startsWith(sl.id + ' ') || (aid && c.startsWith(aid + ' ')) || c.startsWith('차시 '));
     const name = h('input', { placeholder: '이름(누가 고쳤는지 기록)' }); name.value = edBy(); name.addEventListener('change', () => ls.set('eth2_edit_by', name.value.trim()));
@@ -438,7 +582,8 @@ async function classMain() {
       h('label', { class: 'ed-by' }, '고친 사람', name), tok,
       h('section', {}, h('h4', {}, '이 슬라이드'), slideFields(sl).map(([p, lb]) => edField('slide', sl.id, sl, p, lb))),
       act ? h('section', {}, h('h4', {}, `활동 글(${aid}) — 이 활동을 쓰는 모든 장에 반영`), activityFields(act).map(([p, lb]) => edField('activity', aid, act, p, lb))) : null,
-      h('section', {}, h('h4', {}, '검토'), h('label', { class: 'ed-check' }, ED.hide, ' 이 장 숨기기 — 수업 화면·배포본에서 빠짐'), ED.note),
+      h('section', {}, h('h4', {}, '검토'), h('label', { class: 'ed-check' }, ED.hide, ' 이 장 숨기기 — 수업 화면·배포본에서 빠짐'),
+        h('button', { class: 'ghost ed-memo', onclick: () => memoOpen(sl) }, `이 장 메모·수정 요청 ${(MEMOS[sl.id] || []).length}개`), sb.note ? h('p', { class: 'ed-orig' }, '예전 검토 메모: ' + sb.note) : null),
       h('details', {}, h('summary', {}, '차시 정보 — 제목·학습 목표·지도안 표(차시 홈)'), lessonFields(L).map(([p, lb]) => edField('lesson', null, L, p, lb))),
       h('footer', {}, h('span', { class: 'ed-st' }), h('button', { class: 'ghost', onclick: edRevert }, '이 장 원래대로'), h('button', { class: 'go', onclick: edSave }, '저장')));
     $('.ed-panel')?.remove(); document.body.append(panel);
@@ -463,8 +608,8 @@ async function classMain() {
       if (ta.value === ta._orig) r.unset.push(ta.dataset.path); else r.set[ta.dataset.path] = ta.value;
     }
     const sb = edBucket('slide', ED.sid);
-    if (ED.hide.checked !== !!sb.hidden || ED.note.value.trim() !== (sb.note || ''))
-      Object.assign(reqs['slide|' + ED.sid] ||= { scope: 'slide', id: ED.sid, set: {}, unset: [] }, { hidden: ED.hide.checked, note: ED.note.value });
+    if (ED.hide.checked !== !!sb.hidden)
+      Object.assign(reqs['slide|' + ED.sid] ||= { scope: 'slide', id: ED.sid, set: {}, unset: [] }, { hidden: ED.hide.checked });
     if (!Object.keys(reqs).length) return edStatus('바뀐 것이 없어요');
     try { for (const r of Object.values(reqs)) await edPost(r); } catch (e) { return edStatus('저장 못 함: ' + e.message, true); }
     await edReload('저장했어요 ' + new Date().toTimeString().slice(0, 5));
@@ -472,19 +617,21 @@ async function classMain() {
   async function edRevert() {
     const sb = edBucket('slide', ED.sid);
     if (!sb.fields && !sb.hidden && !sb.note) return edStatus('이 장에는 수정한 것이 없어요');
-    if (!confirm('이 장의 수정(글·숨김·메모)을 모두 지우고 원래대로 돌릴까요?')) return;
+    if (!confirm('이 장의 수정(글·숨김)을 모두 지우고 원래대로 돌릴까요? 메모는 그대로 남아요.')) return;
     try { await edPost({ scope: 'slide', id: ED.sid, unset: Object.keys(sb.fields || {}), hidden: false, note: '' }); } catch (e) { return edStatus('되돌리지 못함: ' + e.message, true); }
     await edReload('원래대로 돌렸어요');
   }
   if (editing) await edLoad();
 
   document.addEventListener('keydown', e => {
-    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || document.querySelector('dialog[open]')) return;
+    if (['m', 'M', 'ㅡ'].includes(e.key) && !e.metaKey && !e.ctrlKey) { e.preventDefault(); return memoOpen(L.slides[S.idx]); }
     if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
     else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
     else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {});
   });
   render();
+  if (MEMO.mode === 'sheet') memoRefresh();
 }
 
 /* ======================= 표지 · 학교급 포털 · 차시 홈 ======================= */
@@ -596,7 +743,50 @@ async function homeMain() {
             ext === 'html' ? h('a', { class: 'ghost', href: url, target: '_blank', rel: 'noopener' }, '열기') : null,
             h('a', { class: 'go', href: url, download: name }, '내려받기'));
         }))) : null));
+  await memosCard();
   if (EDIT) await editsCard();
+}
+// 차시 홈 '메모·수정 요청' — 수업 화면 [메모] 버튼으로 남긴 것을 장별로. 시트가 없는 배포 사이트에선 이 브라우저에만 있으니 내려받아 전달한다
+async function memosCard() {
+  await MEMO.init();
+  const cls = `/${PATH[1]}/${L.no}/class`, sec = h('section', { class: 'hm-card pl-card memo-card' });
+  const at = sid => { const i = L.slides.findIndex(x => x.id === sid); return i < 0 ? 1e9 : i; };
+  const sheet = MEMO.mode === 'sheet';
+  let M = MEMO.cached(LID) || await MEMO.load(LID), msg = sheet ? '시트에서 불러오는 중…' : '', seq = 0;
+  const act = async b => {
+    const n = ++seq;
+    M = memoApply(structuredClone(M), b, ls.get('eth2_edit_by') || ''); draw();
+    try { const x = await MEMO.act(LID, b); if (n === seq) M = x; msg = ''; }
+    catch (e) { msg = '저장 못 함: ' + e.message; M = await MEMO.load(LID).catch(() => M); }
+    draw();
+  };
+  const draw = () => {
+    const sids = Object.keys(M).sort((a, b) => at(a) - at(b)), n = sids.reduce((a, k) => a + M[k].length, 0), open = sids.reduce((a, k) => a + M[k].filter(m => !m.done).length, 0);
+    const file = h('input', { type: 'file', accept: '.json,application/json', hidden: true, onchange: async e => {
+      try {
+        const j = JSON.parse(await e.target.files[0].text()), lessons = j.lessons || { [LID]: j };
+        const r = await fetch('/api/memos-import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lessons, by: ls.get('eth2_edit_by') || '' }) });
+        const k = await r.json(); if (!r.ok) throw new Error(k.error || r.status);
+        msg = `${k.added}개 가져왔어요`; M = await MEMO.load(LID);
+      } catch (err) { msg = '가져오지 못함: ' + err.message; }
+      draw();
+    } });
+    sec.replaceChildren(h('h3', {}, '메모·수정 요청', n ? h('small', { class: 'memo-cnt' }, `${n}개 · 안 끝난 것 ${open}`) : null),
+      h('p', { class: 'pl-note' }, '수업 화면 아래 [메모] 버튼(M 키)으로 장마다 남겨요. ', {
+        sheet: '모든 메모는 구글 시트 한 곳에 모입니다(시트에서 완료를 체크해도 여기에 반영).',
+        server: `이 서버의 파일(lessons_v2/memos/${LID}.json)에 저장됩니다.`,
+        local: '이 브라우저에만 저장되니, 내려받은 파일을 전달해 주세요.' }[MEMO.mode]),
+      sids.length ? h('ul', { class: 'memo-sum' }, sids.map(sid => { const i = at(sid), x = L.slides[i];
+        return h('li', {}, h('a', { href: `${cls}?s=${encodeURIComponent(sid)}` }, x ? `${i + 1}번 · ${x.title || x.sub || sid}` : `숨긴 장 · ${sid}`),
+          h('ul', { class: 'memo-list' }, M[sid].map(m => memoLi(m, b => act({ sid, ...b }))))); })) : null,
+      h('div', { class: 'row memo-tools' },
+        h('button', { class: 'ghost', onclick: () => memoExport('csv'), title: '엑셀로 보기 — 모든 차시 메모' }, 'CSV 내려받기'),
+        sheet ? null : h('button', { class: 'ghost', onclick: () => memoExport('json'), title: '모든 차시 메모 — 서버에서 가져오기용' }, 'JSON 내려받기'),
+        MEMO.mode === 'server' ? [file, h('button', { class: 'ghost', onclick: () => file.click(), title: '배포 사이트에서 내려받은 JSON 메모 파일을 이 서버 파일에 합치기' }, '메모 파일 가져오기')] : null,
+        msg ? h('small', { class: 'memo-st' }, msg) : null));
+  };
+  draw(); $('main.home').append(sec);
+  if (sheet) MEMO.load(LID).then(x => { if (!seq) M = x; msg = ''; draw(); }, e => { msg = '시트를 불러오지 못했어요: ' + e.message; draw(); });
 }
 // 차시 홈 '수정 사항' — 수정 파일(lessons_v2/edits/<차시>.json)에 쌓인 것을 장별로(원래 글 → 고친 글, 숨긴 장, 메모, 확인 필요)
 async function editsCard() {
