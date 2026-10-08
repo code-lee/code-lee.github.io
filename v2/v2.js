@@ -9,7 +9,7 @@ const LID = PATH[2] ? `${LVK[PATH[1]]}-${PATH[2]}` : null;
 let DLS = null;
 // 수정 기능 — server.py 로 띄웠을 때만 있다(정적 배포본에는 /api/edit/status 가 없어 null). 경로 규칙은 server.py EDIT_PATH 와 같다
 let EDIT = null;
-const editStatus = () => fetch('/api/edit/status').then(r => r.ok ? r.json() : null).catch(() => null);
+const editStatus = () => Promise.resolve(null);
 const getp = (o, path) => path.split('.').reduce((x, k) => x == null ? undefined : x[Array.isArray(x) ? +k : k], o);
 const setp = (o, path, v) => { const ks = path.split('.'), last = ks.pop(), t = ks.reduce((x, k) => x[Array.isArray(x) ? +k : k], o); t[Array.isArray(t) ? +last : last] = v; };
 const dlUrl = file => DLS ? DLS.base + file.split('/').map(encodeURIComponent).join('/') : null;
